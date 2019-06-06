@@ -1,13 +1,16 @@
 apiVersion: tekton.dev/v1alpha1
 kind: Task
 metadata:
-  name: s2i-dotnet
+  name: s2i-dotnet1
 spec:
   inputs:
     resources:
       - name: source
         type: git
     params:
+      - name: VERSION
+        description: The minor version of the dotnet1
+        default: '1'
       - name: PATH_CONTEXT
         description: The location of the path to run s2i from.
         default: .
@@ -22,7 +25,7 @@ spec:
     - name: generate
       image: quay.io/openshift-pipeline/s2i
       workingdir: /workspace/source
-      command: ['s2i', 'build', '${inputs.params.PATH_CONTEXT}', 'registry.centos.org/dotnet/dotnet-21-centos7', '--as-dockerfile', '/gen-source/Dockerfile.gen']
+      command: ['s2i', 'build', '${inputs.params.PATH_CONTEXT}', 'registry.access.redhat.com/dotnet/dotnetcore-1${inputs.params.VERSION}-rhel7', '--as-dockerfile', '/gen-source/Dockerfile.gen']
       volumeMounts:
         - name: gen-source
           mountPath: /gen-source

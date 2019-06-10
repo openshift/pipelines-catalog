@@ -14,7 +14,7 @@ Python 3 versions currently provided are:
 ## Installing the Python Task
 
 ```
-kubectl apply -f https://raw.githubusercontent.com/openshift/pipelines-catalog/master/s2i-python3/s2i-python-3-task.yaml
+kubectl apply -f https://raw.githubusercontent.com/openshift/pipelines-catalog/master/s2i-python-3/s2i-python-3-task.yaml
 ```
 
 ## Inputs

@@ -1,20 +1,26 @@
-# Java 11 Source-to-Image
+# Python 2 Source-to-Image
 
-This task can be used for building `Java 11` apps as reproducible Docker 
+This task can be used for building `Python` apps as reproducible Docker 
 images using Source-to-Image. [Source-to-Image (S2I)](https://github.com/openshift/source-to-image)
 is a toolkit and a workflow for building reproducible container images
-from source code. This java 11 task uses `registry.access.redhat.com/openjdk/openjdk-11-rhel7` builder image
+from source code. This tasks uses the s2i-python image build from [sclorg/s2i-python-container](https://github.com/sclorg/s2i-python-container).
 
-## Installing the Java 11 Task
+Python 2 versions currently provided are:
+
+- Python 2.7
+
+## Installing the Python Task
 
 ```
-kubectl apply -f https://raw.githubusercontent.com/openshift/pipelines-catalog/master/s2i-java11/s2i-java-11-task.yaml
+kubectl apply -f https://raw.githubusercontent.com/openshift/pipelines-catalog/master/s2i-python-2/s2i-python-2-task.yaml
 ```
 
 ## Inputs
 
 ### Parameters
 
+* **MINOR_VERSION**: Minor version of the Python 2
+  (_default: 7_)
 * **PATH_CONTEXT**: Source path from where S2I command needs to be run
   (_default: ._)
 * **TLSVERIFY**: Verify the TLS on the registry endpoint (for push/pull to a
@@ -57,19 +63,19 @@ oc adm policy add-role-to-user edit -z pipeline
 
 ## Creating the taskrun
 
-This TaskRun runs the java 11 Task to fetch a Git repository and builds and 
-pushes a container image using S2I and a Java 11 builder image.
+This TaskRun runs the python 2 Task to fetch a Git repository and builds and 
+pushes a container image using S2I and a python 2 builder image.
 
 ```
 apiVersion: tekton.dev/v1alpha1
 kind: TaskRun
 metadata:
-  name: s2i-java11-taskrun
+  name: s2i-python2-taskrun
 spec:
   # Use service account with git and image repo credentials
   serviceAccount: pipeline
   taskRef:
-    name: s2i-java-11
+    name: s2i-python-2
   inputs:
     resources:
     - name: source

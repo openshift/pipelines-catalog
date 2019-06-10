@@ -1,7 +1,7 @@
 apiVersion: tekton.dev/v1alpha1
 kind: Task
 metadata:
-  name: s2i-php
+  name: s2i-dotnet2
 spec:
   inputs:
     resources:
@@ -9,7 +9,7 @@ spec:
         type: git
     params:
       - name: MINOR_VERSION
-        description: The minor version of the php
+        description: The minor version of the .NET Core 2
         default: '2'
       - name: PATH_CONTEXT
         description: The location of the path to run s2i from.
@@ -25,7 +25,7 @@ spec:
     - name: generate
       image: quay.io/openshift-pipeline/s2i
       workingdir: /workspace/source
-      command: ['s2i', 'build', '${inputs.params.PATH_CONTEXT}', 'centos/php-7${inputs.params.MINOR_VERSION}-centos7', '--as-dockerfile', '/gen-source/Dockerfile.gen']
+      command: ['s2i', 'build', '${inputs.params.PATH_CONTEXT}', 'registry.centos.org/dotnet/dotnet-2${inputs.params.MINOR_VERSION}-centos7', '--as-dockerfile', '/gen-source/Dockerfile.gen']
       volumeMounts:
         - name: gen-source
           mountPath: /gen-source

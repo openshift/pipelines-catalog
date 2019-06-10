@@ -19,7 +19,7 @@ kubectl apply -f https://raw.githubusercontent.com/openshift/pipelines-catalog/m
 
 ### Parameters
 
-* **VERSION**: Minor version of the Python 2
+* **MINOR_VERSION**: Minor version of the Python 2
   (_default: 7_)
 * **PATH_CONTEXT**: Source path from where S2I command needs to be run
   (_default: ._)

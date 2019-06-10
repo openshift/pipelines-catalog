@@ -1,11 +1,11 @@
-# Python2 Source-to-Image
+# Python 2 Source-to-Image
 
 This task can be used for building `Python` apps as reproducible Docker 
 images using Source-to-Image. [Source-to-Image (S2I)](https://github.com/openshift/source-to-image)
 is a toolkit and a workflow for building reproducible container images
 from source code. This tasks uses the s2i-python image build from [sclorg/s2i-python-container](https://github.com/sclorg/s2i-python-container).
 
-Python2 versions currently provided are:
+Python 2 versions currently provided are:
 
 - Python 2.7
 
@@ -63,8 +63,8 @@ oc adm policy add-role-to-user edit -z pipeline
 
 ## Creating the taskrun
 
-This TaskRun runs the python2 Task to fetch a Git repository and builds and 
-pushes a container image using S2I and a python2 builder image.
+This TaskRun runs the python 2 Task to fetch a Git repository and builds and 
+pushes a container image using S2I and a python 2 builder image.
 
 ```
 apiVersion: tekton.dev/v1alpha1

@@ -1,16 +1,16 @@
-# Dotnet1 Source-to-Image
+# .NET Core 1 Source-to-Image
 
-This task can be used for building `.NET1` Core apps as reproducible Docker 
+This task can be used for building `.NET Core 1` apps as reproducible Docker 
 images using Source-to-Image. [Source-to-Image (S2I)](https://github.com/openshift/source-to-image)
 is a toolkit and a workflow for building reproducible container images
 from source code. This tasks uses the s2i-dotnet image build from [redhat-developer/s2i-dotnetcore](https://github.com/redhat-developer/s2i-dotnetcore).
 
-.NET1 Core versions currently provided are:
+.NET Core versions currently provided are:
 
 - 1.0 (RHEL 7, CentOS 7)
 - 1.1 (RHEL 7)
 
-## Installing the Dotnet1 Task
+## Installing the .NET Core 1 Task
 
 ```
 kubectl apply -f https://raw.githubusercontent.com/openshift/pipelines-catalog/master/s2i-dotnet1/s2i-dotnet1-task.yaml
@@ -20,7 +20,7 @@ kubectl apply -f https://raw.githubusercontent.com/openshift/pipelines-catalog/m
 
 ### Parameters
 
-* **VERSION**: Minor version of the .NET1
+* **VERSION**: Minor version of the .NET Core 1
   (_default: 1_)
 * **PATH_CONTEXT**: Source path from where S2I command needs to be run
   (_default: ._)
@@ -64,8 +64,8 @@ oc adm policy add-role-to-user edit -z pipeline
 
 ## Creating the taskrun
 
-This TaskRun runs the Dotnet1 Task to fetch a Git repository and builds and 
-pushes a container image using S2I and a dotnet1 builder image.
+This TaskRun runs the .NET Core 1 Task to fetch a Git repository and builds and 
+pushes a container image using S2I and a .NET Core 1 builder image.
 
 ```
 apiVersion: tekton.dev/v1alpha1

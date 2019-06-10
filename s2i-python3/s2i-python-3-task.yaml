@@ -9,7 +9,7 @@ spec:
         type: git
     params:
       - name: VERSION
-        description: The minor version of the python3
+        description: The minor version of the python 3
         default: '6'
       - name: PATH_CONTEXT
         description: The location of the path to run s2i from.

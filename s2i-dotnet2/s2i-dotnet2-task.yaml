@@ -9,7 +9,7 @@ spec:
         type: git
     params:
       - name: VERSION
-        description: The minor version of the dotnet2
+        description: The minor version of the .NET Core 2
         default: '2'
       - name: PATH_CONTEXT
         description: The location of the path to run s2i from.

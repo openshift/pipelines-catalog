@@ -1,11 +1,11 @@
-# Java11 Source-to-Image
+# Java 11 Source-to-Image
 
-This task can be used for building `Java11` apps as reproducible Docker 
+This task can be used for building `Java 11` apps as reproducible Docker 
 images using Source-to-Image. [Source-to-Image (S2I)](https://github.com/openshift/source-to-image)
 is a toolkit and a workflow for building reproducible container images
-from source code. This java11 task uses `registry.access.redhat.com/openjdk/openjdk-11-rhel7` builder image
+from source code. This java 11 task uses `registry.access.redhat.com/openjdk/openjdk-11-rhel7` builder image
 
-## Installing the Java11 Task
+## Installing the Java 11 Task
 
 ```
 kubectl apply -f https://raw.githubusercontent.com/openshift/pipelines-catalog/master/s2i-java11/s2i-java-11-task.yaml
@@ -57,8 +57,8 @@ oc adm policy add-role-to-user edit -z pipeline
 
 ## Creating the taskrun
 
-This TaskRun runs the java11 Task to fetch a Git repository and builds and 
-pushes a container image using S2I and a Java11 builder image.
+This TaskRun runs the java 11 Task to fetch a Git repository and builds and 
+pushes a container image using S2I and a Java 11 builder image.
 
 ```
 apiVersion: tekton.dev/v1alpha1

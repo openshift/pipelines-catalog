@@ -1,13 +1,13 @@
-# Java8 Source-to-Image
+# Java 8 Source-to-Image
 
-This task can be used for building `Java8` apps as reproducible Docker 
+This task can be used for building `Java 8` apps as reproducible Docker 
 images using Source-to-Image. [Source-to-Image (S2I)](https://github.com/openshift/source-to-image)
 is a toolkit and a workflow for building reproducible container images
-from source code. This java8 task uses `registry.access.redhat.com/redhat-openjdk-18/openjdk18-openshift` builder image
+from source code. This java 8 task uses `registry.access.redhat.com/redhat-openjdk-18/openjdk18-openshift` builder image
 
 The current version of the Java S2I builder image supports OpenJDK 1.8, Jolokia 1.3.5, and Maven 3.3.9-2.8
 
-## Installing the Java8 Task
+## Installing the Java 8 Task
 
 ```
 kubectl apply -f https://raw.githubusercontent.com/openshift/pipelines-catalog/master/s2i-java8/s2i-java-8-task.yaml
@@ -59,8 +59,8 @@ oc adm policy add-role-to-user edit -z pipeline
 
 ## Creating the taskrun
 
-This TaskRun runs the java8 Task to fetch a Git repository and builds and 
-pushes a container image using S2I and a Java8 builder image.
+This TaskRun runs the java 8 Task to fetch a Git repository and builds and 
+pushes a container image using S2I and a Java 8 builder image.
 
 ```
 apiVersion: tekton.dev/v1alpha1

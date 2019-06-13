@@ -3,13 +3,13 @@
 This task can be used for building `Nodejs` apps as reproducible Docker 
 images using Source-to-Image. [Source-to-Image (S2I)](https://github.com/openshift/source-to-image)
 is a toolkit and a workflow for building reproducible container images
-from source code. This tasks uses the s2i-nodejs image build from [sclorg/s2i-nodejs-container](https://github.com/sclorg/s2i-nodejs-container).
+from source code. This tasks uses the Node.js S2I builder image from [sclorg/s2i-nodejs-container](https://github.com/sclorg/s2i-nodejs-container).
 
-Node.JS versions currently provided are:
+Node.js versions currently provided are:
 
-- NodeJS 6
-- NodeJS 8
-- NodeJS 10
+- Node.js 6
+- Node.js 8
+- Node.js 10
 
 ## Installing the Nodejs Task
 
@@ -21,9 +21,9 @@ kubectl apply -f https://raw.githubusercontent.com/openshift/pipelines-catalog/m
 
 ### Parameters
 
-* **VERSION**: Version of the Nodejs
+* **VERSION**: Version of the Node.js
   (_default: 10_)
-* **PATH_CONTEXT**: Source path from where S2I command needs to be run
+* **PATH_CONTEXT**: Source path from where the S2I command needs to be run
   (_default: ._)
 * **TLSVERIFY**: Verify the TLS on the registry endpoint (for push/pull to a
   non-TLS registry) (_default:_ `true`)
@@ -46,15 +46,12 @@ kubectl apply -f https://raw.githubusercontent.com/openshift/pipelines-catalog/m
 S2I builds an image and pushes it to the destination registry which is
 defined as a parameter. The image needs proper credentials to be 
 authenticated by the remote container registry. These credentials can 
-be provided through a serviceaccount. See [Authentication](https://github.com/tektoncd/pipeline/blob/master/docs/auth.md#basic-authentication-docker)
+be provided through a `ServiceAccount`. See [Authentication](https://github.com/tektoncd/pipeline/blob/master/docs/auth.md#basic-authentication-docker)
 for further details.
 
-If you run on OpenShift, you also need to allow the service
-account to run privileged containers. Due to security considerations 
-OpenShift does not allow containers to run as privileged containers 
-by default.
+If you run on OpenShift, you also need to allow the `ServiceAccount` to run privileged containers. Due to security considerations, OpenShift does not allow containers to run as privileged containers by default.
 
-Run the following in order to create a service account named
+Run the following in order to create a `ServiceAccount` named
 `pipelines` on OpenShift and allow it to run privileged containers:
 
 ```
@@ -65,8 +62,8 @@ oc adm policy add-role-to-user edit -z pipeline
 
 ## Creating the taskrun
 
-This TaskRun runs the Nodejs Task to fetch a Git repository and builds and 
-pushes a container image using S2I and a nodejs builder image.
+This `TaskRun` runs the Node.js `Task` to fetch a Git repository and builds and 
+pushes a container image using S2I and a [Node.js S2I builder image](https://github.com/sclorg/s2i-nodejs-container).
 
 ```
 apiVersion: tekton.dev/v1alpha1

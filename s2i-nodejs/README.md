@@ -49,7 +49,7 @@ authenticated by the remote container registry. These credentials can
 be provided through a `ServiceAccount`. See [Authentication](https://github.com/tektoncd/pipeline/blob/master/docs/auth.md#basic-authentication-docker)
 for further details.
 
-If you run on OpenShift, you also need to allow the `ServiceAccount` to run privileged containers. Due to security considerations,OpenShift does not allow containers to run as privileged containers by default.
+If you run on OpenShift, you also need to allow the `ServiceAccount` to run privileged containers. Due to security considerations, OpenShift does not allow containers to run as privileged containers by default.
 
 Run the following in order to create a `ServiceAccount` named
 `pipelines` on OpenShift and allow it to run privileged containers:

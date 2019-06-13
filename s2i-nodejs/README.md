@@ -63,7 +63,7 @@ oc adm policy add-role-to-user edit -z pipeline
 ## Creating the taskrun
 
 This `TaskRun` runs the Node.js `Task` to fetch a Git repository and builds and 
-pushes a container image using S2I and a [Nodejs S2I builder image](https://github.com/sclorg/s2i-nodejs-container).
+pushes a container image using S2I and a [Node.js S2I builder image](https://github.com/sclorg/s2i-nodejs-container).
 
 ```
 apiVersion: tekton.dev/v1alpha1

@@ -9,7 +9,6 @@ Node.js versions currently provided are:
 
 - Node.js 6
 - Node.js 8
-- Node.js 10
 
 ## Installing the Nodejs Task
 
@@ -22,7 +21,7 @@ kubectl apply -f https://raw.githubusercontent.com/openshift/pipelines-catalog/m
 ### Parameters
 
 * **VERSION**: Version of the Node.js
-  (_default: 10_)
+  (_default: 8_)
 * **PATH_CONTEXT**: Source path from where the S2I command needs to be run
   (_default: ._)
 * **TLSVERIFY**: Verify the TLS on the registry endpoint (for push/pull to a

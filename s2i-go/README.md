@@ -7,7 +7,7 @@ from source code. This tasks uses the s2i-go image build from [sclorg/golang-con
 
 GO versions currently provided are:
 
-- 1.10
+- 1.11
 
 ## Installing the Go Task
 

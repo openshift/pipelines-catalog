@@ -9,11 +9,20 @@ spec:
         type: git
     params:
       - name: PATH_CONTEXT
-        description: The location of the path to run s2i from.
+        description: The location of the path to run s2i from
         default: .
       - name: TLSVERIFY
         description: Verify the TLS on the registry endpoint (for push/pull to a non-TLS registry)
         default: "true"
+      - name: MAVEN_CLEAR_REPO
+        description: Remove the Maven repository after the artifact is built
+        default: "false"
+      - name: MAVEN_ARGS_APPEND
+        description: Additional Maven arguments
+        default: ""
+      - name: MAVEN_MIRROR_URL
+        description: The base URL of a mirror used for retrieving artifacts
+        default: "http://repo.maven.apache.org/maven2"
   outputs:
     resources:
       - name: image
@@ -22,7 +31,7 @@ spec:
     - name: generate
       image: quay.io/openshift-pipeline/s2i
       workingdir: /workspace/source
-      command: ['s2i', 'build', '${inputs.params.PATH_CONTEXT}', 'registry.access.redhat.com/openjdk/openjdk-11-rhel7', '--image-scripts-url', 'image:///usr/local/s2i', '--as-dockerfile', '/gen-source/Dockerfile.gen']
+      command: ['s2i', 'build', '${inputs.params.PATH_CONTEXT}', 'registry.access.redhat.com/openjdk/openjdk-11-rhel7', '--image-scripts-url', 'image:///usr/local/s2i', '--as-dockerfile', '/gen-source/Dockerfile.gen', '-e', 'MAVEN_CLEAR_REPO=${inputs.params.MAVEN_CLEAR_REPO}', '-e', 'MAVEN_ARGS_APPEND=${inputs.params.MAVEN_ARGS_APPEND}', '-e', 'MAVEN_MIRROR_URL=${inputs.params.MAVEN_MIRROR_URL}']
       volumeMounts:
         - name: gen-source
           mountPath: /gen-source

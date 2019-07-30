@@ -18,9 +18,14 @@ kubectl apply -f https://raw.githubusercontent.com/openshift/pipelines-catalog/m
 ### Parameters
 
 * **PATH_CONTEXT**: Source path from where S2I command needs to be run
-  (_default: ._)
+  (_default: `.`_)
 * **TLSVERIFY**: Verify the TLS on the registry endpoint (for push/pull to a
   non-TLS registry) (_default:_ `true`)
+* **MAVEN_CLEAR_REPO**: Remove the Maven repository after the artifact is 
+  built (_default:_ `false`)
+* **MAVEN_ARGS_APPEND**: Additional Maven arguments (_default:_ `Empty String`)
+* **MAVEN_MIRROR_URL**: The base URL of a mirror used for retrieving artifacts 
+  (_default:_ `http://repo.maven.apache.org/maven2`)
 
 
 ### Resources

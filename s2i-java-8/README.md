@@ -21,11 +21,11 @@ kubectl apply -f https://raw.githubusercontent.com/openshift/pipelines-catalog/m
   (_default: `.`_)
 * **TLSVERIFY**: Verify the TLS on the registry endpoint (for push/pull to a
   non-TLS registry) (_default:_ `true`)
-* **MAVEN_ARGS_APPEND**: Additional Maven arguments (_required_, _no default_)
+* **MAVEN_ARGS_APPEND**: Additional Maven arguments (_optional_, _no default_)
 * **MAVEN_CLEAR_REPO**: Remove the Maven repository after the artifact is 
   built (_default:_ `false`)
 * **MAVEN_MIRROR_URL**: The base URL of a mirror used for retrieving artifacts 
-  ((_required_, _no default_))
+  ((_optional_, _no default_))
 
 
 ### Resources

@@ -11,18 +11,23 @@ spec:
       - name: PATH_CONTEXT
         description: The location of the path to run s2i from
         default: .
+        type: string
       - name: TLSVERIFY
         description: Verify the TLS on the registry endpoint (for push/pull to a non-TLS registry)
         default: "true"
+        type: string
       - name: MAVEN_ARGS_APPEND
         description: Additional Maven arguments
-        default: "skip-if-not-set"
+        default: ""
+        type: string
       - name: MAVEN_CLEAR_REPO
         description: Remove the Maven repository after the artifact is built
         default: "false"
+        type: string
       - name: MAVEN_MIRROR_URL
         description: The base URL of a mirror used for retrieving artifacts
-        default: "skip-if-not-set"
+        default: ""
+        type: string
   outputs:
     resources:
       - name: image
@@ -35,14 +40,19 @@ spec:
         - '/bin/sh'
         - '-c'
       args:
-        - echo "MAVEN_CLEAR_REPO=${inputs.params.MAVEN_CLEAR_REPO}" > env-file &&
-          if [[ ${inputs.params.MAVEN_ARGS_APPEND} != "skip-if-not-set" ]]; then
-            echo "MAVEN_ARGS_APPEND=${inputs.params.MAVEN_ARGS_APPEND}" >> env-file;
-          fi &&
-          if [[ ${inputs.params.MAVEN_MIRROR_URL} != "skip-if-not-set" ]]; then
-            echo "MAVEN_MIRROR_URL=${inputs.params.MAVEN_MIRROR_URL}" >> env-file;
-          fi &&
+        - |-
+          echo "MAVEN_CLEAR_REPO=$(inputs.params.MAVEN_CLEAR_REPO)" > env-file
+
+          [[ '$(inputs.params.MAVEN_ARGS_APPEND)' != "" ]] &&
+            echo "MAVEN_ARGS_APPEND=$(inputs.params.MAVEN_ARGS_APPEND)" >> env-file
+
+          [[ '$(inputs.params.MAVEN_MIRROR_URL)' != "" ]] &&
+            echo "MAVEN_MIRROR_URL=$(inputs.params.MAVEN_MIRROR_URL)" >> env-file
+
+          echo "Generated Env file"
+          echo "------------------------------"
           cat env-file
+          echo "------------------------------"
       volumeMounts:
         - name: envparams
           mountPath: /env-params
@@ -52,7 +62,7 @@ spec:
       command:
         - 's2i'
         - 'build'
-        - '${inputs.params.PATH_CONTEXT}'
+        - '$(inputs.params.PATH_CONTEXT)'
         - 'registry.access.redhat.com/openjdk/openjdk-11-rhel7'
         - '--image-scripts-url'
         - 'image:///usr/local/s2i'
@@ -68,7 +78,7 @@ spec:
     - name: build
       image: quay.io/buildah/stable
       workingdir: /gen-source
-      command: ['buildah', 'bud', '--tls-verify=${inputs.params.TLSVERIFY}', '--layers', '-f', '/gen-source/Dockerfile.gen', '-t', '${outputs.resources.image.url}', '.']
+      command: ['buildah', 'bud', '--tls-verify=$(inputs.params.TLSVERIFY)', '--layers', '-f', '/gen-source/Dockerfile.gen', '-t', '$(outputs.resources.image.url)', '.']
       volumeMounts:
         - name: varlibcontainers
           mountPath: /var/lib/containers
@@ -78,7 +88,7 @@ spec:
         privileged: true
     - name: push
       image: quay.io/buildah/stable
-      command: ['buildah', 'push', '--tls-verify=${inputs.params.TLSVERIFY}', '${outputs.resources.image.url}', 'docker://${outputs.resources.image.url}']
+      command: ['buildah', 'push', '--tls-verify=$(inputs.params.TLSVERIFY)', '$(outputs.resources.image.url)', 'docker://$(outputs.resources.image.url)']
       volumeMounts:
         - name: varlibcontainers
           mountPath: /var/lib/containers

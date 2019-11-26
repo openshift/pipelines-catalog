@@ -1,0 +1,21 @@
+---
+apiVersion: tekton.dev/v1alpha1
+kind: TaskRun
+metadata:
+  name: s2i-java-11-run
+spec:
+  taskRef:
+    name: s2i-java-11
+  outputs:
+    resources:
+      - name: image
+        resourceRef:
+          name: image
+  inputs:
+    resources:
+      - name: source
+        resourceRef:
+          name: s2i-java-11-ex
+    params:
+      - name: TLSVERIFY
+        value: "false"

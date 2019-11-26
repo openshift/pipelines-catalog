@@ -1,0 +1,23 @@
+---
+apiVersion: tekton.dev/v1alpha1
+kind: TaskRun
+metadata:
+  name: s2i-dotnet-2-run
+spec:
+  taskRef:
+    name: s2i-dotnet2
+  outputs:
+    resources:
+      - name: image
+        resourceRef:
+          name: image
+  inputs:
+    resources:
+      - name: source
+        resourceRef:
+          name: s2i-dotnet-2-ex
+    params:
+      - name: TLSVERIFY
+        value: "false"
+      - name: PATH_CONTEXT
+        value: "app"

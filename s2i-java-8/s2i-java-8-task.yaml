@@ -34,7 +34,7 @@ spec:
         type: image
   steps:
     - name: gen-env-file
-      image: quay.io/openshift-pipeline/s2i
+      image: quay.io/openshift-pipeline/s2i:v0.8.0
       workingdir: /env-params
       command:
         - '/bin/sh'

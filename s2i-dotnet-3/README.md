@@ -20,7 +20,7 @@ kubectl apply -f https://raw.githubusercontent.com/openshift/pipelines-catalog/m
 
 ### Parameters
 
-* **MINOR_VERSION**: Minor version of the ,NET Core 3
+* **MINOR_VERSION**: Minor version of the .NET Core 3
   (_default: 1_)
 * **PATH_CONTEXT**: Source path from where S2I command needs to be run
   (_default: ._)

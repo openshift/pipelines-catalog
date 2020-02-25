@@ -19,3 +19,5 @@ spec:
     params:
       - name: TLSVERIFY
         value: "false"
+      - name: PATH_CONTEXT
+        value: "app"

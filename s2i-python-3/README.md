@@ -74,7 +74,7 @@ metadata:
   name: s2i-python3-taskrun
 spec:
   # Use service account with git and image repo credentials
-  serviceAccount: pipeline
+  serviceAccountName: pipeline
   taskRef:
     name: s2i-python-3
   inputs:

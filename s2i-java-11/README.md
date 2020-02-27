@@ -72,7 +72,7 @@ metadata:
   name: s2i-java11-taskrun
 spec:
   # Use service account with git and image repo credentials
-  serviceAccount: pipeline
+  serviceAccountName: pipeline
   taskRef:
     name: s2i-java-11
   inputs:

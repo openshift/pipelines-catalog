@@ -66,7 +66,7 @@ This TaskRun runs the java 11 Task to fetch a Git repository and builds and
 pushes a container image using S2I and a Java 11 builder image.
 
 ```
-apiVersion: tekton.dev/v1alpha1
+apiVersion: tekton.dev/v1beta1
 kind: TaskRun
 metadata:
   name: s2i-java11-taskrun
@@ -75,16 +75,15 @@ spec:
   serviceAccountName: pipeline
   taskRef:
     name: s2i-java-11
-  inputs:
-    resources:
+  resources:
+    inputs:
     - name: source
       resourceSpec:
         type: git
         params:
         - name: url
           value: https://github.com/username/reponame
-  outputs:
-    resources:
+    outputs:
     - name: image
       resourceSpec:
         type: image

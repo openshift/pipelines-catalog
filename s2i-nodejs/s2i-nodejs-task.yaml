@@ -1,27 +1,26 @@
-apiVersion: tekton.dev/v1alpha1
+apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
   name: s2i-nodejs
 spec:
-  inputs:
-    resources:
+  params:
+    - name: VERSION
+      description: The version of the nodejs
+      default: '8'
+      type: string
+    - name: PATH_CONTEXT
+      description: The location of the path to run s2i from.
+      default: .
+      type: string
+    - name: TLSVERIFY
+      description: Verify the TLS on the registry endpoint (for push/pull to a non-TLS registry)
+      default: "true"
+      type: string
+  resources:
+    inputs:
       - name: source
         type: git
-    params:
-      - name: VERSION
-        description: The version of the nodejs
-        default: '8'
-        type: string
-      - name: PATH_CONTEXT
-        description: The location of the path to run s2i from.
-        default: .
-        type: string
-      - name: TLSVERIFY
-        description: Verify the TLS on the registry endpoint (for push/pull to a non-TLS registry)
-        default: "true"
-        type: string
-  outputs:
-    resources:
+    outputs:
       - name: image
         type: image
   steps:

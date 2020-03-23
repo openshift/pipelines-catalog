@@ -1,35 +1,34 @@
-apiVersion: tekton.dev/v1alpha1
+apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
   name: s2i-java-8
 spec:
-  inputs:
-    resources:
+  params:
+    - name: PATH_CONTEXT
+      description: The location of the path to run s2i from
+      default: .
+      type: string
+    - name: TLSVERIFY
+      description: Verify the TLS on the registry endpoint (for push/pull to a non-TLS registry)
+      default: "true"
+      type: string
+    - name: MAVEN_ARGS_APPEND
+      description: Additional Maven arguments
+      default: ""
+      type: string
+    - name: MAVEN_CLEAR_REPO
+      description: Remove the Maven repository after the artifact is built
+      default: "false"
+      type: string
+    - name: MAVEN_MIRROR_URL
+      description: The base URL of a mirror used for retrieving artifacts
+      default: ""
+      type: string
+  resources:
+    inputs:
       - name: source
         type: git
-    params:
-      - name: PATH_CONTEXT
-        description: The location of the path to run s2i from
-        default: .
-        type: string
-      - name: TLSVERIFY
-        description: Verify the TLS on the registry endpoint (for push/pull to a non-TLS registry)
-        default: "true"
-        type: string
-      - name: MAVEN_ARGS_APPEND
-        description: Additional Maven arguments
-        default: ""
-        type: string
-      - name: MAVEN_CLEAR_REPO
-        description: Remove the Maven repository after the artifact is built
-        default: "false"
-        type: string
-      - name: MAVEN_MIRROR_URL
-        description: The base URL of a mirror used for retrieving artifacts
-        default: ""
-        type: string
-  outputs:
-    resources:
+    outputs:
       - name: image
         type: image
   steps:

@@ -40,13 +40,13 @@ spec:
         - '-c'
       args:
         - |-
-          echo "MAVEN_CLEAR_REPO=$(inputs.params.MAVEN_CLEAR_REPO)" > env-file
+          echo "MAVEN_CLEAR_REPO=$(params.MAVEN_CLEAR_REPO)" > env-file
 
-          [[ '$(inputs.params.MAVEN_ARGS_APPEND)' != "" ]] &&
-            echo "MAVEN_ARGS_APPEND=$(inputs.params.MAVEN_ARGS_APPEND)" >> env-file
+          [[ '$(params.MAVEN_ARGS_APPEND)' != "" ]] &&
+            echo "MAVEN_ARGS_APPEND=$(params.MAVEN_ARGS_APPEND)" >> env-file
 
-          [[ '$(inputs.params.MAVEN_MIRROR_URL)' != "" ]] &&
-            echo "MAVEN_MIRROR_URL=$(inputs.params.MAVEN_MIRROR_URL)" >> env-file
+          [[ '$(params.MAVEN_MIRROR_URL)' != "" ]] &&
+            echo "MAVEN_MIRROR_URL=$(params.MAVEN_MIRROR_URL)" >> env-file
 
           echo "Generated Env file"
           echo "------------------------------"
@@ -61,7 +61,7 @@ spec:
       command:
         - 's2i'
         - 'build'
-        - '$(inputs.params.PATH_CONTEXT)'
+        - '$(params.PATH_CONTEXT)'
         - 'registry.access.redhat.com/redhat-openjdk-18/openjdk18-openshift'
         - '--image-scripts-url'
         - 'image:///usr/local/s2i'
@@ -77,7 +77,7 @@ spec:
     - name: build
       image: quay.io/buildah/stable:v1.11.0
       workingdir: /gen-source
-      command: ['buildah', 'bud', '--tls-verify=$(inputs.params.TLSVERIFY)', '--layers', '-f', '/gen-source/Dockerfile.gen', '-t', '$(outputs.resources.image.url)', '.']
+      command: ['buildah', 'bud', '--tls-verify=$(params.TLSVERIFY)', '--layers', '-f', '/gen-source/Dockerfile.gen', '-t', '$(resources.outputs.image.url)', '.']
       volumeMounts:
         - name: varlibcontainers
           mountPath: /var/lib/containers
@@ -87,7 +87,7 @@ spec:
         privileged: true
     - name: push
       image: quay.io/buildah/stable:v1.11.0
-      command: ['buildah', 'push', '--tls-verify=$(inputs.params.TLSVERIFY)', '$(outputs.resources.image.url)', 'docker://$(outputs.resources.image.url)']
+      command: ['buildah', 'push', '--tls-verify=$(params.TLSVERIFY)', '$(resources.outputs.image.url)', 'docker://$(resources.outputs.image.url)']
       volumeMounts:
         - name: varlibcontainers
           mountPath: /var/lib/containers

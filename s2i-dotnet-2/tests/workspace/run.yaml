@@ -1,0 +1,59 @@
+---
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: s2i-dotnet2-pipeline
+spec:
+  workspaces:
+    - name: shared-workspace
+  resources:
+    - name: build-image
+      type: image
+  tasks:
+    - name: fetch-repository
+      taskRef:
+        name: git-clone
+      workspaces:
+        - name: output
+          workspace: shared-workspace
+      params:
+        - name: url
+          value: https://github.com/redhat-developer/s2i-dotnetcore-ex
+        - name: subdirectory
+          value: ""
+        - name: deleteExisting
+          value: "true"
+        - name: revision
+          value: dotnetcore-2.2
+    - name: s2i-dotnet-2-test
+      taskRef:
+        name: s2i-dotnet2-workspace
+      runAfter:
+        - fetch-repository
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+      resources:
+        outputs:
+          - name: image
+            resource: build-image
+      params:
+        - name: TLSVERIFY
+          value: "false"
+
+---
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: s2i-dotnet2-pipeline-run
+spec:
+  pipelineRef:
+    name: s2i-dotnet2-pipeline
+  workspaces:
+    - name: shared-workspace
+      persistentvolumeclaim:
+        claimName: s2i-dotnet-2-pvc
+  resources:
+    - name: build-image
+      resourceRef:
+        name: s2i-dotnet-2-image

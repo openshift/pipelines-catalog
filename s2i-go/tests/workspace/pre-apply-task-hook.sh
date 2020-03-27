@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # - TMPF is the temporary file where the YAML is processed.
 # - We are duplicating the temporary file since we cannot do the manipulation in

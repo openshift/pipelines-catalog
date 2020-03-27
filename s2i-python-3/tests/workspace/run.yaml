@@ -6,9 +6,6 @@ metadata:
 spec:
   workspaces:
     - name: shared-workspace
-  resources:
-    - name: build-image
-      type: image
   tasks:
     - name: fetch-repository
       taskRef:
@@ -33,13 +30,11 @@ spec:
       workspaces:
         - name: source
           workspace: shared-workspace
-      resources:
-        outputs:
-          - name: image
-            resource: build-image
       params:
         - name: TLSVERIFY
           value: "false"
+        - name: IMAGE
+          value: "localhost:5000/s2i-python-3"
 
 ---
 apiVersion: tekton.dev/v1beta1
@@ -53,7 +48,3 @@ spec:
     - name: shared-workspace
       persistentvolumeclaim:
         claimName: s2i-python-3-pvc
-  resources:
-    - name: build-image
-      resourceRef:
-        name: s2i-python-3-image

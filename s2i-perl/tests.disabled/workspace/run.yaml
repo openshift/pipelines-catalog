@@ -1,0 +1,61 @@
+---
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: s2i-perl-pipeline
+spec:
+  workspaces:
+    - name: shared-workspace
+  resources:
+    - name: build-image
+      type: image
+  tasks:
+    - name: fetch-repository
+      taskRef:
+        name: git-clone
+      workspaces:
+        - name: output
+          workspace: shared-workspace
+      params:
+        - name: url
+          value: https://github.com/sclorg/s2i-perl-container
+        - name: subdirectory
+          value: ""
+        - name: deleteExisting
+          value: "true"
+        - name: revision
+          value: master
+    - name: s2i-perl-test
+      taskRef:
+        name: s2i-perl-workspace
+      runAfter:
+        - fetch-repository
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+      resources:
+        outputs:
+          - name: image
+            resource: build-image
+      params:
+        - name: TLSVERIFY
+          value: "false"
+        - name: PATH_CONTEXT
+          value: "examples/sample-test-app"
+
+---
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: s2i-perl-pipeline-run
+spec:
+  pipelineRef:
+    name: s2i-perl-pipeline
+  workspaces:
+    - name: shared-workspace
+      persistentvolumeclaim:
+        claimName: s2i-perl-pvc
+  resources:
+    - name: build-image
+      resourceRef:
+        name: s2i-perl-image

@@ -9,13 +9,3 @@ spec:
   resources:
     requests:
       storage: 500Mi
----
-apiVersion: tekton.dev/v1alpha1
-kind: PipelineResource
-metadata:
-  name: s2i-perl-image
-spec:
-  type: image
-  params:
-    - name: url
-      value: localhost:5000/s2i-perl

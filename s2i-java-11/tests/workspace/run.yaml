@@ -1,0 +1,59 @@
+---
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: s2i-java-11-pipeline
+spec:
+  workspaces:
+    - name: shared-workspace
+  resources:
+    - name: build-image
+      type: image
+  tasks:
+    - name: fetch-repository
+      taskRef:
+        name: git-clone
+      workspaces:
+        - name: output
+          workspace: shared-workspace
+      params:
+        - name: url
+          value: https://github.com/spring-projects/spring-petclinic
+        - name: subdirectory
+          value: ""
+        - name: deleteExisting
+          value: "true"
+        - name: revision
+          value: master
+    - name: s2i-java-11-test
+      taskRef:
+        name: s2i-java-11-workspace
+      runAfter:
+        - fetch-repository
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+      resources:
+        outputs:
+          - name: image
+            resource: build-image
+      params:
+        - name: TLSVERIFY
+          value: "false"
+
+---
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: s2i-java-11-pipeline-run
+spec:
+  pipelineRef:
+    name: s2i-java-11-pipeline
+  workspaces:
+    - name: shared-workspace
+      persistentvolumeclaim:
+        claimName: s2i-java-11-pvc
+  resources:
+    - name: build-image
+      resourceRef:
+        name: s2i-java-11-image

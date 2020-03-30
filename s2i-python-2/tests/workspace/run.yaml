@@ -1,0 +1,51 @@
+---
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: s2i-python-2-pipeline
+spec:
+  workspaces:
+    - name: shared-workspace
+  tasks:
+    - name: fetch-repository
+      taskRef:
+        name: git-clone
+      workspaces:
+        - name: output
+          workspace: shared-workspace
+      params:
+        - name: url
+          value: https://github.com/sclorg/django-ex
+        - name: subdirectory
+          value: ""
+        - name: deleteExisting
+          value: "true"
+        - name: revision
+          value: master
+    - name: s2i-python-2-test
+      taskRef:
+        name: s2i-python-2-workspace
+      runAfter:
+        - fetch-repository
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+      params:
+        - name: TLSVERIFY
+          value: "false"
+        - name: IMAGE
+          value: "localhost:5000/s2i-python-2"
+
+---
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: s2i-python-2-pipeline-run
+spec:
+  pipelineRef:
+    name: s2i-python-2-pipeline
+  workspaces:
+    - name: shared-workspace
+      persistentvolumeclaim:
+        claimName: s2i-python-2-pvc
+

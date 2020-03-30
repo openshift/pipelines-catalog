@@ -65,7 +65,7 @@ This `TaskRun` runs the Node.js `Task` to fetch a Git repository and builds and
 pushes a container image using S2I and a [Node.js S2I builder image](https://github.com/sclorg/s2i-nodejs-container).
 
 ```
-apiVersion: tekton.dev/v1alpha1
+apiVersion: tekton.dev/v1beta1
 kind: TaskRun
 metadata:
   name: s2i-nodejs-taskrun
@@ -74,16 +74,15 @@ spec:
   serviceAccountName: pipeline
   taskRef:
     name: s2i-nodejs
-  inputs:
-    resources:
+  resources:
+    inputs:
     - name: source
       resourceSpec:
         type: git
         params:
         - name: url
           value: https://github.com/username/reponame
-  outputs:
-    resources:
+    outputs:
     - name: image
       resourceSpec:
         type: image

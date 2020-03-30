@@ -69,7 +69,7 @@ This TaskRun runs the php Task to fetch a Git repository and builds and
 pushes a container image using S2I and a php builder image.
 
 ```
-apiVersion: tekton.dev/v1alpha1
+apiVersion: tekton.dev/v1beta1
 kind: TaskRun
 metadata:
   name: s2i-php-taskrun
@@ -78,16 +78,15 @@ spec:
   serviceAccountName: pipeline
   taskRef:
     name: s2i-php
-  inputs:
-    resources:
+  resources:
+    inputs:
     - name: source
       resourceSpec:
         type: git
         params:
         - name: url
           value: https://github.com/username/reponame
-  outputs:
-    resources:
+    outputs:
     - name: image
       resourceSpec:
         type: image

@@ -68,7 +68,7 @@ This TaskRun runs the java 8 Task to fetch a Git repository and builds and
 pushes a container image using S2I and a Java 8 builder image.
 
 ```
-apiVersion: tekton.dev/v1alpha1
+apiVersion: tekton.dev/v1beta1
 kind: TaskRun
 metadata:
   name: s2i-java8-taskrun
@@ -77,16 +77,15 @@ spec:
   serviceAccountName: pipeline
   taskRef:
     name: s2i-java-8
-  inputs:
-    resources:
+  resources:
+    inputs:
     - name: source
       resourceSpec:
         type: git
         params:
         - name: url
           value: https://github.com/username/reponame
-  outputs:
-    resources:
+    outputs:
     - name: image
       resourceSpec:
         type: image

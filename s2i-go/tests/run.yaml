@@ -1,21 +1,20 @@
 ---
-apiVersion: tekton.dev/v1alpha1
+apiVersion: tekton.dev/v1beta1
 kind: TaskRun
 metadata:
   name: s2i-go-run
 spec:
   taskRef:
     name: s2i-go
-  outputs:
-    resources:
+  resources:
+    outputs:
       - name: image
         resourceRef:
           name: image
-  inputs:
-    resources:
+    inputs:
       - name: source
         resourceRef:
           name: go-ex
-    params:
-      - name: TLSVERIFY
-        value: "false"
+  params:
+    - name: TLSVERIFY
+      value: "false"

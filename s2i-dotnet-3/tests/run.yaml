@@ -5,7 +5,7 @@ metadata:
   name: s2i-dotnet-3-run
 spec:
   taskRef:
-    name: s2i-dotnet3
+    name: s2i-dotnet-3
   resources:
     outputs:
       - name: image

@@ -71,12 +71,12 @@ pushes a container image using S2I and a .NET Core 3 builder image.
 apiVersion: tekton.dev/v1beta1
 kind: TaskRun
 metadata:
-  name: s2i-dotnet3-taskrun
+  name: s2i-dotnet-3-taskrun
 spec:
   # Use service account with git and image repo credentials
   serviceAccountName: pipeline
   taskRef:
-    name: s2i-dotnet3
+    name: s2i-dotnet-3
   resources:
     inputs:
     - name: source

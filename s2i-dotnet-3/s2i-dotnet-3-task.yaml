@@ -1,7 +1,7 @@
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
-  name: s2i-dotnet3
+  name: s2i-dotnet-3
 spec:
   params:
     - name: MINOR_VERSION

@@ -21,7 +21,7 @@ spec:
         - name: deleteExisting
           value: "true"
         - name: revision
-          value: master
+          value: "d367e2b4b41a2de899b0f438bc984a7c1c011b77"
     - name: s2i-java-11-test
       taskRef:
         name: s2i-java-11-workspace

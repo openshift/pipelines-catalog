@@ -11,4 +11,4 @@ cp ${TMPF} ${TMPF}.read
 cat ${TMPF}.read | python -c 'import yaml,sys;data=yaml.load(sys.stdin.read());data["spec"]["sidecars"]=[{"image":"registry", "name": "registry"}];print(yaml.dump(data, default_flow_style=False));' > ${TMPF}
 rm -f ${TMPF}.read
 
-kubectl -n ${tns} apply -f ./git/git-clone.yaml
+kubectl -n ${tns} apply -f ./task/git-clone/0.1/git-clone.yaml

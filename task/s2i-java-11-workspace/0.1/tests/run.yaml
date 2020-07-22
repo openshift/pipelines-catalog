@@ -20,6 +20,8 @@ spec:
           value: ""
         - name: deleteExisting
           value: "true"
+        - name: revision
+          value: "main"
     - name: s2i-java-11-test
       taskRef:
         name: s2i-java-11-workspace

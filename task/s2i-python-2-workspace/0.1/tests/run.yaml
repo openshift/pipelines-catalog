@@ -21,7 +21,7 @@ spec:
         - name: deleteExisting
           value: "true"
         - name: revision
-          value: 1.11.x
+          value: master
     - name: s2i-python-2-test
       taskRef:
         name: s2i-python-2-workspace

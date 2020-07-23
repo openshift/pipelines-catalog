@@ -1,4 +1,4 @@
-apiVersion: tekton.dev/v1alpha1
+apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
   name: s2i-eap
@@ -16,21 +16,20 @@ spec:
     This current version of the Java EAP S2I builder image supports
     OpenJDK 11, EAP CD 18, and Maven 3.5.4-5.
 
-  inputs:
-    resources:
+  params:
+    - name: PATH_CONTEXT
+      description: The location of the path to run s2i from
+      default: .
+      type: string
+    - name: TLSVERIFY
+      description: Verify the TLS on the registry endpoint (for push/pull to a non-TLS registry)
+      default: "true"
+      type: string
+  resources:
+    inputs:
       - name: source
         type: git
-    params:
-      - name: PATH_CONTEXT
-        description: The location of the path to run s2i from
-        default: .
-        type: string
-      - name: TLSVERIFY
-        description: Verify the TLS on the registry endpoint (for push/pull to a non-TLS registry)
-        default: "true"
-        type: string
-  outputs:
-    resources:
+    outputs:
       - name: image
         type: image
   stepTemplate:
@@ -44,7 +43,7 @@ spec:
       command:
         - 's2i'
         - 'build'
-        - '$(inputs.params.PATH_CONTEXT)'
+        - '$(params.PATH_CONTEXT)'
         - 'registry.redhat.io/jboss-eap-7-tech-preview/eap-cd-openshift-rhel8'
         - '--assemble-user'
         - '185'
@@ -62,7 +61,7 @@ spec:
     - name: build
       image: quay.io/buildah/stable:v1.11.0
       workingdir: /gen-source
-      command: ['buildah', 'bud', '--tls-verify=$(inputs.params.TLSVERIFY)', '--layers', '-f', '/gen-source/Dockerfile.gen', '-t', '$(outputs.resources.image.url)', '.']
+      command: ['buildah', 'bud', '--tls-verify=$(params.TLSVERIFY)', '--layers', '-f', '/gen-source/Dockerfile.gen', '-t', '$(resources.outputs.image.url)', '.']
       volumeMounts:
         - name: varlibcontainers
           mountPath: /var/lib/containers
@@ -72,7 +71,7 @@ spec:
         privileged: true
     - name: push
       image: quay.io/buildah/stable:v1.11.0
-      command: ['buildah', 'push', '--tls-verify=$(inputs.params.TLSVERIFY)', '$(outputs.resources.image.url)', 'docker://$(outputs.resources.image.url)']
+      command: ['buildah', 'push', '--tls-verify=$(params.TLSVERIFY)', '$(resources.outputs.image.url)', 'docker://$(resources.outputs.image.url)']
       volumeMounts:
         - name: varlibcontainers
           mountPath: /var/lib/containers

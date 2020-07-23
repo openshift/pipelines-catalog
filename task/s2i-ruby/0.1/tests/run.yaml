@@ -1,20 +1,50 @@
 ---
 apiVersion: tekton.dev/v1beta1
-kind: TaskRun
+kind: Pipeline
 metadata:
-  name: s2i-ruby-run
+  name: s2i-ruby-pipeline
 spec:
-  taskRef:
-    name: s2i-ruby
-  resources:
-    outputs:
-      - name: image
-        resourceRef:
-          name: image
-    inputs:
-      - name: source
-        resourceRef:
-          name: s2i-ruby-ex
-  params:
-    - name: TLSVERIFY
-      value: "false"
+  workspaces:
+    - name: shared-workspace
+  tasks:
+    - name: fetch-repository
+      taskRef:
+        name: git-clone
+      workspaces:
+        - name: output
+          workspace: shared-workspace
+      params:
+        - name: url
+          value: https://github.com/sclorg/ruby-ex
+        - name: subdirectory
+          value: ""
+        - name: deleteExisting
+          value: "true"
+        - name: revision
+          value: master
+    - name: s2i-ruby-test
+      taskRef:
+        name: s2i-ruby
+      runAfter:
+        - fetch-repository
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+      params:
+        - name: TLSVERIFY
+          value: "false"
+        - name: IMAGE
+          value: "localhost:5000/s2i-ruby"
+
+---
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: s2i-ruby-pipeline-run
+spec:
+  pipelineRef:
+    name: s2i-ruby-pipeline
+  workspaces:
+    - name: shared-workspace
+      persistentvolumeclaim:
+        claimName: s2i-ruby-pvc

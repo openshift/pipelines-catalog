@@ -1,6 +1,6 @@
 # Nodejs Source-to-Image
 
-This task can be used for building `Nodejs` apps as reproducible Docker 
+This task can be used for building `Nodejs` apps as reproducible Docker
 images using Source-to-Image. [Source-to-Image (S2I)](https://github.com/openshift/source-to-image)
 is a toolkit and a workflow for building reproducible container images
 from source code. This tasks uses the Node.js S2I builder image from [sclorg/s2i-nodejs-container](https://github.com/sclorg/s2i-nodejs-container).
@@ -15,9 +15,7 @@ Node.js versions currently provided are:
 kubectl apply -f https://raw.githubusercontent.com/openshift/pipelines-catalog/master/task/s2i-nodejs/0.1/s2i-nodejs.yaml
 ```
 
-## Inputs
-
-### Parameters
+## Parameters
 
 * **VERSION**: Version of the Node.js
   (_default: 10_)
@@ -25,25 +23,18 @@ kubectl apply -f https://raw.githubusercontent.com/openshift/pipelines-catalog/m
   (_default: ._)
 * **TLSVERIFY**: Verify the TLS on the registry endpoint (for push/pull to a
   non-TLS registry) (_default:_ `true`)
+* **IMAGE**: Location of the repo where image has to be pushed.
 
+## Workspaces
 
-### Resources
-
-* **source**: A `git`-type `PipelineResource` specifying the location of the
-  source to build.
-
-## Outputs
-
-### Resources
-
-* **image**: An `image`-type `PipelineResource` specifying the image that should
-  be built.
+* **source**: A workspace specifying the location of the source to
+  build.
 
 ## Creating a ServiceAccount
 
 S2I builds an image and pushes it to the destination registry which is
-defined as a parameter. The image needs proper credentials to be 
-authenticated by the remote container registry. These credentials can 
+defined as a parameter. The image needs proper credentials to be
+authenticated by the remote container registry. These credentials can
 be provided through a `ServiceAccount`. See [Authentication](https://github.com/tektoncd/pipeline/blob/master/docs/auth.md#basic-authentication-docker)
 for further details.
 
@@ -58,34 +49,70 @@ oc adm policy add-scc-to-user privileged -z pipeline
 oc adm policy add-role-to-user edit -z pipeline
 ```
 
-## Creating the taskrun
+## Using a a `Pipeline` with `git-clone`
 
-This `TaskRun` runs the Node.js `Task` to fetch a Git repository and builds and 
+```yaml
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: s2i-nodejs-pipeline
+spec:
+  params:
+    - name: IMAGE
+      description: Location of the repo where image has to be pushed
+      type: string
+  workspaces:
+    - name: shared-workspace
+  tasks:
+    - name: fetch-repository
+      taskRef:
+        name: git-clone
+      workspaces:
+        - name: output
+          workspace: shared-workspace
+      params:
+        - name: url
+          value: https://github.com/username/reponame
+        - name: subdirectory
+          value: ""
+        - name: deleteExisting
+          value: "true"
+    - name: s2i
+      taskRef:
+        name: s2i-nodejs
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+      params:
+        - name: IMAGE
+          value: $(params.IMAGE)
+```
+
+## Creating the pipelinerun
+
+This PipelineRun runs the Node.js Task to fetch a Git repository and builds and
 pushes a container image using S2I and a [Node.js S2I builder image](https://github.com/sclorg/s2i-nodejs-container).
 
-```
+```yaml
 apiVersion: tekton.dev/v1beta1
-kind: TaskRun
+kind: PipelineRun
 metadata:
-  name: s2i-nodejs-taskrun
+  name: s2i-nodejs-pipelinerun
 spec:
   # Use service account with git and image repo credentials
   serviceAccountName: pipeline
-  taskRef:
-    name: s2i-nodejs
-  resources:
-    inputs:
-    - name: source
-      resourceSpec:
-        type: git
-        params:
-        - name: url
-          value: https://github.com/username/reponame
-    outputs:
-    - name: image
-      resourceSpec:
-        type: image
-        params:
-        - name: url
-          value: quay.io/my-repo/my-image-name
+  pipelineRunRef:
+    name: s2i-nodejs-pipeline
+  params:
+  - name: IMAGE
+    value: quay.io/my-repo/my-image-name
+  workspaces:
+  - name: shared-data
+    volumeClaimTemplate:
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
 ```

@@ -1,22 +1,11 @@
 ---
-apiVersion: tekton.dev/v1alpha1
-kind: PipelineResource
+apiVersion: v1
+kind: PersistentVolumeClaim
 metadata:
-  name: go-ex
+  name: s2i-go-pvc
 spec:
-  type: git
-  params:
-    - name: revision
-      value: master
-    - name: url
-      value: https://github.com/sclorg/golang-ex
----
-apiVersion: tekton.dev/v1alpha1
-kind: PipelineResource
-metadata:
-  name: image
-spec:
-  type: image
-  params:
-    - name: url
-      value: localhost:5000/s2i-go
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 500Mi

@@ -1,22 +1,12 @@
 ---
-apiVersion: tekton.dev/v1alpha1
-kind: PipelineResource
+apiVersion: v1
+kind: PersistentVolumeClaim
 metadata:
-  name: s2i-java-8-ex
+  name: s2i-java-8-pvc
 spec:
-  type: git
-  params:
-    - name: revision
-      value: "d367e2b4b41a2de899b0f438bc984a7c1c011b77"
-    - name: url
-      value: https://github.com/spring-projects/spring-petclinic
----
-apiVersion: tekton.dev/v1alpha1
-kind: PipelineResource
-metadata:
-  name: image
-spec:
-  type: image
-  params:
-    - name: url
-      value: localhost:5000/s2i-java-8
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 500Mi
+

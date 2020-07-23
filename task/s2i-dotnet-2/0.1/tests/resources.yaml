@@ -1,22 +1,11 @@
 ---
-apiVersion: tekton.dev/v1alpha1
-kind: PipelineResource
+apiVersion: v1
+kind: PersistentVolumeClaim
 metadata:
-  name: s2i-dotnet-2-ex
+  name: s2i-dotnet-2-pvc
 spec:
-  type: git
-  params:
-    - name: revision
-      value: dotnetcore-2.2
-    - name: url
-      value: https://github.com/redhat-developer/s2i-dotnetcore-ex
----
-apiVersion: tekton.dev/v1alpha1
-kind: PipelineResource
-metadata:
-  name: image
-spec:
-  type: image
-  params:
-    - name: url
-      value: localhost:5000/s2i-dotnet-2
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 500Mi

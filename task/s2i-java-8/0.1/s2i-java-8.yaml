@@ -1,16 +1,16 @@
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
-  name: s2i-java-8
+  name: s2i-java-8-workspace
   labels:
     app.kubernetes.io/version: "0.1"
   annotations:
     tekton.dev/pipelines.minVersion: "0.11.3"
-    tekton.dev/tags: s2i, java
+    tekton.dev/tags: s2i, java, workspace
     tekton.dev/displayName: "s2i java 8"
 spec:
   description: >-
-    s2i-java-8 task fetches a Git repository and builds and
+    s2i-java-8-workspace task clones a Git repository and builds and
     pushes a container image using S2I and a Java 8 builder image.
 
   params:
@@ -34,13 +34,12 @@ spec:
       description: The base URL of a mirror used for retrieving artifacts
       default: ""
       type: string
-  resources:
-    inputs:
-      - name: source
-        type: git
-    outputs:
-      - name: image
-        type: image
+    - name: IMAGE
+      description: Location of the repo where image has to be pushed
+      type: string
+  workspaces:
+    - name: source
+      mountPath: /workspace/source
   steps:
     - name: gen-env-file
       image: quay.io/openshift-pipeline/s2i
@@ -67,7 +66,7 @@ spec:
           mountPath: /env-params
     - name: generate
       image: quay.io/openshift-pipeline/s2i
-      workingdir: /workspace/source
+      workingdir: $(workspaces.source.path)
       command:
         - 's2i'
         - 'build'
@@ -87,7 +86,7 @@ spec:
     - name: build
       image: quay.io/buildah/stable:v1.11.0
       workingdir: /gen-source
-      command: ['buildah', 'bud', '--tls-verify=$(params.TLSVERIFY)', '--layers', '-f', '/gen-source/Dockerfile.gen', '-t', '$(resources.outputs.image.url)', '.']
+      command: ['buildah', 'bud', '--tls-verify=$(params.TLSVERIFY)', '--layers', '-f', '/gen-source/Dockerfile.gen', '-t', '$(params.IMAGE)', '.']
       volumeMounts:
         - name: varlibcontainers
           mountPath: /var/lib/containers
@@ -97,7 +96,7 @@ spec:
         privileged: true
     - name: push
       image: quay.io/buildah/stable:v1.11.0
-      command: ['buildah', 'push', '--tls-verify=$(params.TLSVERIFY)', '$(resources.outputs.image.url)', 'docker://$(resources.outputs.image.url)']
+      command: ['buildah', 'push', '--tls-verify=$(params.TLSVERIFY)', '$(params.IMAGE)', 'docker://$(params.IMAGE)']
       volumeMounts:
         - name: varlibcontainers
           mountPath: /var/lib/containers

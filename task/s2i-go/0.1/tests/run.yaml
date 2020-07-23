@@ -1,20 +1,50 @@
 ---
 apiVersion: tekton.dev/v1beta1
-kind: TaskRun
+kind: Pipeline
 metadata:
-  name: s2i-go-run
+  name: s2i-go-pipeline
 spec:
-  taskRef:
-    name: s2i-go
-  resources:
-    outputs:
-      - name: image
-        resourceRef:
-          name: image
-    inputs:
-      - name: source
-        resourceRef:
-          name: go-ex
-  params:
-    - name: TLSVERIFY
-      value: "false"
+  workspaces:
+    - name: shared-workspace
+  tasks:
+    - name: fetch-repository
+      taskRef:
+        name: git-clone
+      workspaces:
+        - name: output
+          workspace: shared-workspace
+      params:
+        - name: url
+          value: https://github.com/sclorg/golang-ex
+        - name: subdirectory
+          value: ""
+        - name: deleteExisting
+          value: "true"
+        - name: revision
+          value: master
+    - name: s2i-go-test
+      taskRef:
+        name: s2i-go
+      runAfter:
+        - fetch-repository
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+      params:
+        - name: TLSVERIFY
+          value: "false"
+        - name: IMAGE
+          value: "localhost:5000/s2i-go"
+
+---
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: s2i-go-pipeline-run
+spec:
+  pipelineRef:
+    name: s2i-go-pipeline
+  workspaces:
+    - name: shared-workspace
+      persistentvolumeclaim:
+        claimName: s2i-go-pvc

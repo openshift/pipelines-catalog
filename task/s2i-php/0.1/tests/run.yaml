@@ -1,22 +1,52 @@
 ---
 apiVersion: tekton.dev/v1beta1
-kind: TaskRun
+kind: Pipeline
 metadata:
-  name: s2i-php-run
+  name: s2i-php-pipeline
 spec:
-  taskRef:
-    name: s2i-php
-  resources:
-    outputs:
-      - name: image
-        resourceRef:
-          name: image
-    inputs:
-      - name: source
-        resourceRef:
-          name: s2i-php-ex
-  params:
-    - name: TLSVERIFY
-      value: "false"
-    - name: PATH_CONTEXT
-      value: "test/test-app"
+  workspaces:
+    - name: shared-workspace
+  tasks:
+    - name: fetch-repository
+      taskRef:
+        name: git-clone
+      workspaces:
+        - name: output
+          workspace: shared-workspace
+      params:
+        - name: url
+          value: https://github.com/sclorg/s2i-php-container/
+        - name: subdirectory
+          value: ""
+        - name: deleteExisting
+          value: "true"
+        - name: revision
+          value: master
+    - name: s2i-php-test
+      taskRef:
+        name: s2i-php
+      runAfter:
+        - fetch-repository
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+      params:
+        - name: TLSVERIFY
+          value: "false"
+        - name: PATH_CONTEXT
+          value: "test/test-app"
+        - name: IMAGE
+          value: "localhost:5000/s2i-php"
+
+---
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: s2i-php-pipeline-run
+spec:
+  pipelineRef:
+    name: s2i-php-pipeline
+  workspaces:
+    - name: shared-workspace
+      persistentvolumeclaim:
+        claimName: s2i-php-pvc

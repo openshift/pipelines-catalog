@@ -1,20 +1,11 @@
 ---
-apiVersion: tekton.dev/v1alpha1
-kind: PipelineResource
+apiVersion: v1
+kind: PersistentVolumeClaim
 metadata:
-  name: s2i-java-11-ex
+  name: s2i-java-11-pvc
 spec:
-  type: git
-  params:
-    - name: url
-      value: https://github.com/piyush-garg/spring-petclinic
----
-apiVersion: tekton.dev/v1alpha1
-kind: PipelineResource
-metadata:
-  name: image
-spec:
-  type: image
-  params:
-    - name: url
-      value: localhost:5000/s2i-java-11
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 500Mi

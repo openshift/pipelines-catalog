@@ -1,16 +1,16 @@
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
-  name: s2i-nodejs
+  name: s2i-nodejs-workspace
   labels:
     app.kubernetes.io/version: "0.1"
   annotations:
     tekton.dev/pipelines.minVersion: "0.11.3"
-    tekton.dev/tags: s2i, nodejs
+    tekton.dev/tags: s2i, nodejs, workspace
     tekton.dev/displayName: "s2i nodejs"
 spec:
   description: >-
-    s2i-nodejs task fetches a Git repository and builds and
+    s2i-nodejs-workspace task clones a Git repository and builds and
     pushes a container image using S2I and a nodejs builder image.
 
   params:
@@ -26,17 +26,16 @@ spec:
       description: Verify the TLS on the registry endpoint (for push/pull to a non-TLS registry)
       default: "true"
       type: string
-  resources:
-    inputs:
-      - name: source
-        type: git
-    outputs:
-      - name: image
-        type: image
+    - name: IMAGE
+      description: Location of the repo where image has to be pushed
+      type: string
+  workspaces:
+    - name: source
+      mountPath: /workspace/source
   steps:
     - name: generate
       image: quay.io/openshift-pipeline/s2i
-      workingdir: /workspace/source
+      workingdir: $(workspaces.source.path)
       command: ['s2i', 'build', '$(params.PATH_CONTEXT)', 'registry.access.redhat.com/rhscl/nodejs-$(params.VERSION)-rhel7', '--as-dockerfile', '/gen-source/Dockerfile.gen']
       volumeMounts:
         - name: gen-source
@@ -44,7 +43,7 @@ spec:
     - name: build
       image: quay.io/buildah/stable:v1.11.0
       workingdir: /gen-source
-      command: ['buildah', 'bud', '--tls-verify=$(params.TLSVERIFY)', '--layers', '-f', '/gen-source/Dockerfile.gen', '-t', '$(resources.outputs.image.url)', '.']
+      command: ['buildah', 'bud', '--tls-verify=$(params.TLSVERIFY)', '--layers', '-f', '/gen-source/Dockerfile.gen', '-t', '$(params.IMAGE)', '.']
       volumeMounts:
         - name: varlibcontainers
           mountPath: /var/lib/containers
@@ -54,7 +53,7 @@ spec:
         privileged: true
     - name: push
       image: quay.io/buildah/stable:v1.11.0
-      command: ['buildah', 'push', '--tls-verify=$(params.TLSVERIFY)', '$(resources.outputs.image.url)', 'docker://$(resources.outputs.image.url)']
+      command: ['buildah', 'push', '--tls-verify=$(params.TLSVERIFY)', '$(params.IMAGE)', 'docker://$(params.IMAGE)']
       volumeMounts:
         - name: varlibcontainers
           mountPath: /var/lib/containers

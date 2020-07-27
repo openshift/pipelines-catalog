@@ -16,17 +16,12 @@ kubectl apply -f https://raw.githubusercontent.com/openshift/pipelines-catalog/m
 * **PATH_CONTEXT**: Source path from where S2I command needs to be run
   (_default: `.`_)
 * **TLSVERIFY**: Verify the TLS on the registry endpoint (for push/pull to a non-TLS registry) (_default:_ `true`)
+* **IMAGE**: Location of the repo where image has to be pushed.
 
-## Resources
+## Workspaces
 
-### Inputs
-
-* **source**: A `git`-type `PipelineResource` specifying the location of the source to build.
-
-### Outputs
-
-* **image**: An `image`-type `PipelineResource` specifying the image that should
-  be built.
+* **source**: A workspace specifying the location of the source to
+  build.
 
 Example:
 ```
@@ -74,41 +69,72 @@ oc create secret docker-registry <pull_secret_name> \
 oc secrets link pipeline <pull_secret_name>
 ```
 
+## Using a a `Pipeline` with `git-clone`
 
-## Creating the taskrun
-
-This TaskRun runs the java EAP Task to fetch a Git repository and builds and pushes a container image using S2I and a Java EAP builder image. It is an example based on an existing BuildConfig of EAP:
-
-```
+```yaml
 apiVersion: tekton.dev/v1beta1
-kind: TaskRun
+kind: Pipeline
 metadata:
-  name: s2i-eap-taskrun
+  name: s2i-eap-pipeline
+spec:
+  params:
+    - name: IMAGE
+      description: Location of the repo where image has to be pushed
+      type: string
+  workspaces:
+    - name: shared-workspace
+  tasks:
+    - name: fetch-repository
+      taskRef:
+        name: git-clone
+      workspaces:
+        - name: output
+          workspace: shared-workspace
+      params:
+        - name: url
+          value: https://github.com/username/reponame
+        - name: subdirectory
+          value: ""
+        - name: deleteExisting
+          value: "true"
+    - name: s2i
+      taskRef:
+        name: s2i-eap
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+      params:
+        - name: IMAGE
+          value: $(params.IMAGE)
+        - name: TLSVERIFY
+          value: 'false'
+```
+
+## Creating the pipelinerun
+
+This PipelineRun runs the Java EAP Task to fetch a Git repository and builds and
+pushes a container image using S2I and a Java EAP builder image.
+
+```yaml
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: s2i-eap-pipelinerun
 spec:
   # Use service account with git and image repo credentials
   serviceAccountName: pipeline
-  taskRef:
-    name: s2i-eap
+  pipelineRunRef:
+    name: s2i-eap-pipeline
   params:
-  - name: PATH_CONTEXT
-    value: kitchensink
-  - name: TLSVERIFY
-    value: 'false'
-  resources:
-    inputs:
-    - name: source
-      resourceSpec:
-        type: git
-        params:
-        - name: url
-          value: https://github.com/jboss-developer/jboss-eap-quickstarts
-        - name: revision
-          value: openshift
-    outputs:
-    - name: image
-      resourceSpec:
-        type: image
-        params:
-        - name: url
-          value: image-registry.openshift-image-registry.svc:5000/my-namespace/my-image-name
+  - name: IMAGE
+    value: quay.io/my-repo/my-image-name
+  workspaces:
+  - name: shared-data
+    volumeClaimTemplate:
+      spec:
+        accessModes:
+        - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
 ```

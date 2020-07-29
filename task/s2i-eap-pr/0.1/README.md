@@ -8,7 +8,7 @@ This current version of the Java EAP S2I builder image supports OpenJDK 11, EAP 
 ## Installing the Java EAP Task
 
 ```
-kubectl apply -f https://raw.githubusercontent.com/openshift/pipelines-catalog/master/task/s2i-eap-pr/0.1/s2i-eap.yaml
+kubectl apply -f https://raw.githubusercontent.com/openshift/pipelines-catalog/master/task/s2i-eap-pr/0.1/s2i-eap-pr.yaml
 ```
 
 ## Parameters

@@ -69,7 +69,7 @@ oc create secret docker-registry <pull_secret_name> \
 oc secrets link pipeline <pull_secret_name>
 ```
 
-## Using a a `Pipeline` with `git-clone`
+## Using a `Pipeline` with `git-clone`
 
 ```yaml
 apiVersion: tekton.dev/v1beta1

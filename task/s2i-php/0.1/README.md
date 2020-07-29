@@ -60,7 +60,7 @@ oc adm policy add-role-to-user edit -z pipeline
 * **source**: A workspace specifying the location of the source to
   build.
 
-## Using a a `Pipeline` with `git-clone`
+## Using a `Pipeline` with `git-clone`
 
 ```yaml
 apiVersion: tekton.dev/v1beta1

@@ -14,7 +14,7 @@ Ruby versions currently provided are:
 ## Installing the Ruby Task
 
 ```
-kubectl apply -f https://raw.githubusercontent.com/openshift/pipelines-catalog/master/task/s2i-ruby-pr/0.1/s2i-ruby.yaml
+kubectl apply -f https://raw.githubusercontent.com/openshift/pipelines-catalog/master/task/s2i-ruby-pr/0.1/s2i-ruby-pr.yaml
 ```
 
 ## Inputs

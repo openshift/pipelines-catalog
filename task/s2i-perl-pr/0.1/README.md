@@ -13,7 +13,7 @@ Perl versions currently provided are:
 ## Installing the Perl Task
 
 ```
-kubectl apply -f https://raw.githubusercontent.com/openshift/pipelines-catalog/master/task/s2i-perl-pr/0.1/s2i-perl.yaml
+kubectl apply -f https://raw.githubusercontent.com/openshift/pipelines-catalog/master/task/s2i-perl-pr/0.1/s2i-perl-pr.yaml
 ```
 
 ## Inputs

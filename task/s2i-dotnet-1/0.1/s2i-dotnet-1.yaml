@@ -10,7 +10,7 @@ metadata:
     tekton.dev/displayName: "s2i dotnet 1"
 spec:
   description: >-
-    s2i-dotnet-1-workspace task clones a Git repository and builds and
+    s2i-dotnet-1 task clones a Git repository and builds and
     pushes a container image using S2I and a .NET Core 1 builder image.
 
   params:

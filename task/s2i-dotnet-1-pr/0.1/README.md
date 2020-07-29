@@ -13,7 +13,7 @@ from source code. This tasks uses the s2i-dotnet image build from [redhat-develo
 ## Installing the .NET Core 1 Task
 
 ```
-kubectl apply -f https://raw.githubusercontent.com/openshift/pipelines-catalog/master/task/s2i-dotnet-1-pr/0.1/s2i-dotnet-1.yaml
+kubectl apply -f https://raw.githubusercontent.com/openshift/pipelines-catalog/master/task/s2i-dotnet-1-pr/0.1/s2i-dotnet-1-pr.yaml
 ```
 
 ## Inputs

@@ -1,7 +1,7 @@
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
-  name: s2i-nodejs-workspace
+  name: s2i-nodejs
   labels:
     app.kubernetes.io/version: "0.1"
   annotations:
@@ -10,7 +10,7 @@ metadata:
     tekton.dev/displayName: "s2i nodejs"
 spec:
   description: >-
-    s2i-nodejs-workspace task clones a Git repository and builds and
+    s2i-nodejs task clones a Git repository and builds and
     pushes a container image using S2I and a nodejs builder image.
 
   params:

@@ -1,7 +1,7 @@
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
-  name: s2i-java-8-workspace
+  name: s2i-java-8
   labels:
     app.kubernetes.io/version: "0.1"
   annotations:
@@ -10,7 +10,7 @@ metadata:
     tekton.dev/displayName: "s2i java 8"
 spec:
   description: >-
-    s2i-java-8-workspace task clones a Git repository and builds and
+    s2i-java-8 task clones a Git repository and builds and
     pushes a container image using S2I and a Java 8 builder image.
 
   params:

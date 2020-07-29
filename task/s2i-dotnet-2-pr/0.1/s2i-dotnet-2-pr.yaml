@@ -1,22 +1,22 @@
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
-  name: s2i-dotnet-3-pr
+  name: s2i-dotnet-2-pr
   labels:
     app.kubernetes.io/version: "0.1"
   annotations:
     tekton.dev/pipelines.minVersion: "0.11.3"
     tekton.dev/tags: s2i, dotnet
-    tekton.dev/displayName: "s2i dotnet 3 pipelineresource"
+    tekton.dev/displayName: "s2i dotnet 2 pipelineresource"
 spec:
   description: >-
-    s2i-dotnet-3 task fetches a Git repository and builds and
-    pushes a container image using S2I and a .NET Core 3 builder image.
+    s2i-dotnet-2-pr task fetches a Git repository and builds and
+    pushes a container image using S2I and a .NET Core 2 builder image.
 
   params:
     - name: MINOR_VERSION
-      description: The minor version of the .NET Core 3
-      default: '1'
+      description: The minor version of the .NET Core 2
+      default: '2'
       type: string
     - name: PATH_CONTEXT
       description: The location of the path to run s2i from.
@@ -37,7 +37,7 @@ spec:
     - name: generate
       image: quay.io/openshift-pipeline/s2i
       workingdir: /workspace/source
-      command: ['s2i', 'build', '$(params.PATH_CONTEXT)', 'image-registry.openshift-image-registry.svc:5000/openshift/dotnet:3.$(params.MINOR_VERSION)', '--as-dockerfile', '/gen-source/Dockerfile.gen']
+      command: ['s2i', 'build', '$(params.PATH_CONTEXT)', 'registry.access.redhat.com/dotnet/dotnet-2$(params.MINOR_VERSION)-rhel7', '--as-dockerfile', '/gen-source/Dockerfile.gen']
       volumeMounts:
         - name: gen-source
           mountPath: /gen-source

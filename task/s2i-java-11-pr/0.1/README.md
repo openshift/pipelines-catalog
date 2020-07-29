@@ -8,7 +8,7 @@ from source code. This java 11 task uses `registry.access.redhat.com/openjdk/ope
 ## Installing the Java 11 Task
 
 ```
-kubectl apply -f https://raw.githubusercontent.com/openshift/pipelines-catalog/master/task/s2i-java-11-pr/0.1/s2i-java-11.yaml
+kubectl apply -f https://raw.githubusercontent.com/openshift/pipelines-catalog/master/task/s2i-java-11-pr/0.1/s2i-java-11-pr.yaml
 ```
 
 ## Inputs

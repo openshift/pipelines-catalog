@@ -10,7 +10,7 @@ metadata:
     tekton.dev/displayName: "s2i nodejs pipelineresource"
 spec:
   description: >-
-    s2i-nodejs task fetches a Git repository and builds and
+    s2i-nodejs-pr task fetches a Git repository and builds and
     pushes a container image using S2I and a nodejs builder image.
 
   params:

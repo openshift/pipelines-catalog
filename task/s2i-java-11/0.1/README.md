@@ -50,7 +50,7 @@ oc adm policy add-scc-to-user privileged -z pipeline
 oc adm policy add-role-to-user edit -z pipeline
 ```
 
-## Using a a `Pipeline` with `git-clone`
+## Using a `Pipeline` with `git-clone`
 
 ```yaml
 apiVersion: tekton.dev/v1beta1

@@ -10,7 +10,7 @@ metadata:
     tekton.dev/displayName: "s2i java 8 pipelineresource"
 spec:
   description: >-
-    s2i-java-8 task fetches a Git repository and builds and
+    s2i-java-8-pr task fetches a Git repository and builds and
     pushes a container image using S2I and a Java 8 builder image.
 
   params:

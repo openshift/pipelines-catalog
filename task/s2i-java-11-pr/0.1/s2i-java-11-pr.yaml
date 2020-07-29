@@ -1,20 +1,17 @@
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
-  name: s2i-eap-pr
+  name: s2i-java-11-pr
   labels:
     app.kubernetes.io/version: "0.1"
   annotations:
     tekton.dev/pipelines.minVersion: "0.11.3"
-    tekton.dev/tags: s2i, eap
-    tekton.dev/displayName: "s2i eap pipelineresource"
+    tekton.dev/tags: s2i, java
+    tekton.dev/displayName: "s2i java 11 pipelineresource"
 spec:
   description: >-
-    s2i-eap task fetches a Git repository and builds and
-    pushes a container image using S2I and a Java EAP builder image
-
-    This current version of the Java EAP S2I builder image supports
-    OpenJDK 11, EAP CD 18, and Maven 3.5.4-5.
+    s2i-java-11-pr task fetches a Git repository and builds and
+    pushes a container image using S2I and a Java 11 builder image.
 
   params:
     - name: PATH_CONTEXT
@@ -25,6 +22,18 @@ spec:
       description: Verify the TLS on the registry endpoint (for push/pull to a non-TLS registry)
       default: "true"
       type: string
+    - name: MAVEN_ARGS_APPEND
+      description: Additional Maven arguments
+      default: ""
+      type: string
+    - name: MAVEN_CLEAR_REPO
+      description: Remove the Maven repository after the artifact is built
+      default: "false"
+      type: string
+    - name: MAVEN_MIRROR_URL
+      description: The base URL of a mirror used for retrieving artifacts
+      default: ""
+      type: string
   resources:
     inputs:
       - name: source
@@ -32,11 +41,30 @@ spec:
     outputs:
       - name: image
         type: image
-  stepTemplate:
-    envFrom:
-      - configMapRef:
-          name: s2i-eap-configmap  # used for build env
   steps:
+    - name: gen-env-file
+      image: quay.io/openshift-pipeline/s2i
+      workingdir: /env-params
+      command:
+        - '/bin/sh'
+        - '-c'
+      args:
+        - |-
+          echo "MAVEN_CLEAR_REPO=$(params.MAVEN_CLEAR_REPO)" > env-file
+
+          [[ '$(params.MAVEN_ARGS_APPEND)' != "" ]] &&
+            echo "MAVEN_ARGS_APPEND=$(params.MAVEN_ARGS_APPEND)" >> env-file
+
+          [[ '$(params.MAVEN_MIRROR_URL)' != "" ]] &&
+            echo "MAVEN_MIRROR_URL=$(params.MAVEN_MIRROR_URL)" >> env-file
+
+          echo "Generated Env file"
+          echo "------------------------------"
+          cat env-file
+          echo "------------------------------"
+      volumeMounts:
+        - name: envparams
+          mountPath: /env-params
     - name: generate
       image: quay.io/openshift-pipeline/s2i
       workingdir: /workspace/source
@@ -44,9 +72,7 @@ spec:
         - 's2i'
         - 'build'
         - '$(params.PATH_CONTEXT)'
-        - 'registry.redhat.io/jboss-eap-7-tech-preview/eap-cd-openshift-rhel8'
-        - '--assemble-user'
-        - '185'
+        - 'registry.access.redhat.com/openjdk/openjdk-11-rhel7'
         - '--image-scripts-url'
         - 'image:///usr/local/s2i'
         - '--as-dockerfile'
@@ -83,5 +109,4 @@ spec:
     - name: gen-source
       emptyDir: {}
     - name: envparams
-      configMap:
-        name: s2i-eap-configmap
+      emptyDir: {}

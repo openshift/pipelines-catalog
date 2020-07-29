@@ -10,7 +10,7 @@ The current version of the Java S2I builder image supports OpenJDK 1.8, Jolokia 
 ## Installing the Java 8 Task
 
 ```
-kubectl apply -f https://raw.githubusercontent.com/openshift/pipelines-catalog/master/task/s2i-java-8-pr/0.1/s2i-java-8.yaml
+kubectl apply -f https://raw.githubusercontent.com/openshift/pipelines-catalog/master/task/s2i-java-8-pr/0.1/s2i-java-8-pr.yaml
 ```
 
 ## Inputs

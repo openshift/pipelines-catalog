@@ -1,23 +1,19 @@
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
-  name: s2i-python-2-pr
+  name: s2i-go-pr
   labels:
     app.kubernetes.io/version: "0.1"
   annotations:
     tekton.dev/pipelines.minVersion: "0.11.3"
-    tekton.dev/tags: s2i, python
-    tekton.dev/displayName: "s2i python 2 pipelineresource"
+    tekton.dev/tags: s2i, go
+    tekton.dev/displayName: "s2i go pipelineresource"
 spec:
   description: >-
-    s2i-python-2 task fetches a Git repository and builds and
-    pushes a container image using S2I and a Python 2 builder image.
+    s2i-go-pr task fetches a Git repository and builds and
+    pushes a container image using S2I and a Go builder image.
 
   params:
-    - name: MINOR_VERSION
-      description: The minor version of the python 2
-      default: '7'
-      type: string
     - name: PATH_CONTEXT
       description: The location of the path to run s2i from.
       default: .
@@ -37,7 +33,7 @@ spec:
     - name: generate
       image: quay.io/openshift-pipeline/s2i
       workingdir: /workspace/source
-      command: ['s2i', 'build', '$(params.PATH_CONTEXT)', 'registry.access.redhat.com/rhscl/python-2$(params.MINOR_VERSION)-rhel7', '--as-dockerfile', '/gen-source/Dockerfile.gen']
+      command: ['s2i', 'build', '$(params.PATH_CONTEXT)', 'registry.access.redhat.com/devtools/go-toolset-rhel7', '--as-dockerfile', '/gen-source/Dockerfile.gen']
       volumeMounts:
         - name: gen-source
           mountPath: /gen-source

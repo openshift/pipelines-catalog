@@ -1,0 +1,20 @@
+---
+apiVersion: tekton.dev/v1beta1
+kind: TaskRun
+metadata:
+  name: buildah-run
+spec:
+  taskRef:
+    name: buildah-pr
+  resources:
+    outputs:
+      - name: image
+        resourceRef:
+          name: image
+    inputs:
+      - name: source
+        resourceRef:
+          name: nocode
+  params:
+    - name: TLSVERIFY
+      value: "false"

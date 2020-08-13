@@ -8,6 +8,7 @@ from source code. This tasks uses the Node.js S2I builder image from [sclorg/s2i
 Node.js versions currently provided are:
 
 - Node.js 10
+- Node.js 12
 
 ## Installing the Nodejs Task
 
@@ -20,7 +21,7 @@ kubectl apply -f https://raw.githubusercontent.com/openshift/pipelines-catalog/m
 ### Parameters
 
 * **VERSION**: Version of the Node.js
-  (_default: 10_)
+  (_default: 12_)
 * **PATH_CONTEXT**: Source path from where the S2I command needs to be run
   (_default: ._)
 * **TLSVERIFY**: Verify the TLS on the registry endpoint (for push/pull to a

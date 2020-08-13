@@ -7,8 +7,7 @@ from source code. This tasks uses the s2i-php image build from [sclorg/s2i-php-c
 
 PHP versions currently provided are:
 
-- PHP 7.0
-- PHP 7.1
+- PHP 7.3
 - PHP 7.2
 
 ## Installing the PHP Task
@@ -22,7 +21,7 @@ kubectl apply -f https://raw.githubusercontent.com/openshift/pipelines-catalog/m
 ### Parameters
 
 * **MINOR_VERSION**: Minor version of the PHP 7
-  (_default: 2_)
+  (_default: 3_)
 * **PATH_CONTEXT**: Source path from where S2I command needs to be run
   (_default: ._)
 * **TLSVERIFY**: Verify the TLS on the registry endpoint (for push/pull to a

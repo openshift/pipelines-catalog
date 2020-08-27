@@ -21,7 +21,7 @@ spec:
         - name: deleteExisting
           value: "true"
         - name: revision
-          value: dotnetcore-2.2
+          value: dotnetcore-3.1
     - name: s2i-dotnet-3-test
       taskRef:
         name: s2i-dotnet-3

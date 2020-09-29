@@ -1,0 +1,22 @@
+---
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: pipeline-catalog-check-pr
+spec:
+  pipelineRef:
+    name: pipeline-catalog-check
+  params:
+    - name: repo_url
+      value: {{repo_url}}
+    - name: revision
+      value: {{revision}}
+  workspaces:
+  - name: source
+    volumeClaimTemplate:
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi

@@ -31,3 +31,10 @@ spec:
       workspaces:
         - name: shared-workspace
           workspace: source
+    - name: kubectl-dry-run
+      runAfter: [fetch]
+      taskRef:
+        name: kubectl-dry-run
+      workspaces:
+        - name: source
+          workspace: source

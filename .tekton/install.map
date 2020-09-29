@@ -3,5 +3,6 @@ catalog://official:git-clone:0.2
 catalog://official:yaml-lint:0.1
 
 # Order is important here
+kubectl-dry-run.yaml
 pipeline.yaml
 run.yaml

@@ -51,9 +51,9 @@ spec:
       volumeMounts:
         - name: varlibcontainers
           mountPath: /var/lib/containers
-      securityContext:
-        privileged: true
-
+      env:
+      - name: STORAGE_DRIVER
+        value: vfs
     - name: push
       image: $(params.BUILDER_IMAGE)
       workingDir: /workspace/source
@@ -61,9 +61,9 @@ spec:
       volumeMounts:
         - name: varlibcontainers
           mountPath: /var/lib/containers
-      securityContext:
-        privileged: true
-
+      env:
+      - name: STORAGE_DRIVER
+        value: vfs
   volumes:
     - name: varlibcontainers
       emptyDir: {}

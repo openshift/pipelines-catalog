@@ -92,16 +92,18 @@ spec:
           mountPath: /var/lib/containers
         - name: gen-source
           mountPath: /gen-source
-      securityContext:
-        privileged: true
+      env:
+      - name: STORAGE_DRIVER
+        value: vfs
     - name: push
       image: quay.io/buildah/stable:v1.15.1
       command: ['buildah', 'push', '--tls-verify=$(params.TLSVERIFY)', '$(params.IMAGE)', 'docker://$(params.IMAGE)']
       volumeMounts:
         - name: varlibcontainers
           mountPath: /var/lib/containers
-      securityContext:
-        privileged: true
+      env:
+      - name: STORAGE_DRIVER
+        value: vfs
   volumes:
     - name: varlibcontainers
       emptyDir: {}

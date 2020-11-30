@@ -38,7 +38,7 @@ spec:
         - name: gen-source
           mountPath: /gen-source
     - name: build
-      image: quay.io/buildah/stable:v1.11.0
+      image: quay.io/buildah/stable:v1.15.1
       workingdir: /gen-source
       command: ['buildah', 'bud', '--tls-verify=$(params.TLSVERIFY)', '--layers', '-f', '/gen-source/Dockerfile.gen', '-t', '$(resources.outputs.image.url)', '.']
       volumeMounts:
@@ -49,7 +49,7 @@ spec:
       securityContext:
         privileged: true
     - name: push
-      image: quay.io/buildah/stable:v1.11.0
+      image: quay.io/buildah/stable:v1.15.1
       command: ['buildah', 'push', '--tls-verify=$(params.TLSVERIFY)', '$(resources.outputs.image.url)', 'docker://$(resources.outputs.image.url)']
       volumeMounts:
         - name: varlibcontainers

@@ -1,0 +1,7 @@
+- name: prestep
+  taskSpec:
+    steps:
+      - name: prestep-mind-the-gap
+        image: registry.access.redhat.com/ubi8/ubi-minimal:8.2
+        script: |
+          echo "OK: pre-step as passed"

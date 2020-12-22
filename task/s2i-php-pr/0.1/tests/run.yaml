@@ -1,20 +1,13 @@
----
-apiVersion: tekton.dev/v1beta1
-kind: TaskRun
-metadata:
-  name: s2i-php-run
-spec:
+- name: s2i-php-pr
   taskRef:
     name: s2i-php-pr
   resources:
     outputs:
       - name: image
-        resourceRef:
-          name: image
+        resource: s2i-php-pr-image
     inputs:
       - name: source
-        resourceRef:
-          name: s2i-php-ex
+        resource: s2i-php-pr-repo
   params:
     - name: TLSVERIFY
       value: "false"

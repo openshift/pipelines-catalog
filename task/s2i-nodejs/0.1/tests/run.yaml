@@ -1,50 +1,29 @@
----
-apiVersion: tekton.dev/v1beta1
-kind: Pipeline
-metadata:
-  name: s2i-nodejs-pipeline
-spec:
+- name: fetch-repository-s2i-nodejs
+  taskRef:
+    name: git-clone
   workspaces:
-    - name: shared-workspace
-  tasks:
-    - name: fetch-repository
-      taskRef:
-        name: git-clone
-      workspaces:
-        - name: output
-          workspace: shared-workspace
-      params:
-        - name: url
-          value: https://github.com/sclorg/nodejs-ex
-        - name: subdirectory
-          value: ""
-        - name: deleteExisting
-          value: "true"
-        - name: revision
-          value: master
-    - name: s2i-nodejs-test
-      taskRef:
-        name: s2i-nodejs
-      runAfter:
-        - fetch-repository
-      workspaces:
-        - name: source
-          workspace: shared-workspace
-      params:
-        - name: TLSVERIFY
-          value: "false"
-        - name: IMAGE
-          value: "localhost:5000/s2i-nodejs"
+    - name: output
+      workspace: s2i-nodejs-workspace
+  params:
+    - name: url
+      value: https://github.com/sclorg/nodejs-ex
+    - name: subdirectory
+      value: ""
+    - name: deleteExisting
+      value: "true"
+    - name: revision
+      value: "master"
 
----
-apiVersion: tekton.dev/v1beta1
-kind: PipelineRun
-metadata:
-  name: s2i-nodejs-pipeline-run
-spec:
-  pipelineRef:
-    name: s2i-nodejs-pipeline
+- name: s2i-nodejs-test
+  taskRef:
+    name: s2i-nodejs
+  runAfter:
+    - fetch-repository-s2i-nodejs
   workspaces:
-    - name: shared-workspace
-      persistentvolumeclaim:
-        claimName: s2i-nodejs-pvc
+    - name: source
+      workspace: s2i-nodejs-workspace
+  params:
+    - name: TLSVERIFY
+      value: "false"
+    - name: IMAGE
+      value: "image-registry.openshift-image-registry.svc:5000/{{namespace}}/s2i-nodejs"

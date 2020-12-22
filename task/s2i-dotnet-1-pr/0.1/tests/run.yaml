@@ -1,20 +1,13 @@
----
-apiVersion: tekton.dev/v1beta1
-kind: TaskRun
-metadata:
-  name: s2i-dotnet-1-run
-spec:
+- name: s2i-dotnet-1-pr-run
   taskRef:
     name: s2i-dotnet-1-pr
   resources:
     outputs:
       - name: image
-        resourceRef:
-          name: image
+        resource: s2i-dotnet-1-pr-image
     inputs:
       - name: source
-        resourceRef:
-          name: s2i-dotnet-1-ex
+        resource: s2i-dotnet-1-pr-repo
   params:
     - name: TLSVERIFY
       value: "false"

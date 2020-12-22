@@ -1,20 +1,13 @@
----
-apiVersion: tekton.dev/v1beta1
-kind: TaskRun
-metadata:
-  name: s2i-ruby-run
-spec:
+- name: s2i-ruby-pr
   taskRef:
     name: s2i-ruby-pr
   resources:
     outputs:
       - name: image
-        resourceRef:
-          name: image
+        resource: s2i-ruby-pr-image
     inputs:
       - name: source
-        resourceRef:
-          name: s2i-ruby-ex
+        resource: s2i-ruby-pr-repo
   params:
     - name: TLSVERIFY
       value: "false"

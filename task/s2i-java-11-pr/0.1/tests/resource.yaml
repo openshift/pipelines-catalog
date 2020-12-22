@@ -1,0 +1,20 @@
+---
+apiVersion: tekton.dev/v1alpha1
+kind: PipelineResource
+metadata:
+  name: s2i-java-11-pr-repo
+spec:
+  type: git
+  params:
+    - name: url
+      value: https://github.com/piyush-garg/spring-petclinic
+---
+apiVersion: tekton.dev/v1alpha1
+kind: PipelineResource
+metadata:
+  name: s2i-java-11-pr-image
+spec:
+  type: image
+  params:
+    - name: url
+      value: "image-registry.openshift-image-registry.svc:5000/{{namespace}}/s2i-java-11-pr"

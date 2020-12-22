@@ -1,20 +1,13 @@
----
-apiVersion: tekton.dev/v1beta1
-kind: TaskRun
-metadata:
-  name: s2i-python-2-run
-spec:
+- name: s2i-python-2-pr
   taskRef:
     name: s2i-python-2-pr
   resources:
     outputs:
       - name: image
-        resourceRef:
-          name: image
+        resource: s2i-python-2-pr-image
     inputs:
       - name: source
-        resourceRef:
-          name: s2i-python-2-ex
+        resource: s2i-python-2-pr-repo
   params:
     - name: TLSVERIFY
       value: "false"

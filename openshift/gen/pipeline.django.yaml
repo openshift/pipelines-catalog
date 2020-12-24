@@ -4,13 +4,17 @@ kind: Pipeline
 metadata:
   name: {{pipeline_name}}
 spec:
-  {%if workspaces %}
+  params:
+    - name: repo_url
+    - name: revision
   workspaces:
+    - name: source
+    {%if workspaces -%}
     {% for workspace in workspaces -%}
     - name: {{ workspace }}
-    {% endfor %}
-  {% endif %}
-  {%if resources %}
+    {% endfor -%}
+    {% endif -%}
+{%- if resources %}
   resources:
     {% for resource in resources -%}
     - name: {{ resource[1] }}
@@ -21,8 +25,8 @@ spec:
 {% filter indent(width=4) %}
 {% for step in steps -%}
 {{ step }}
-{% endfor %}
-{% endfilter %}
+{% endfor -%}
+{% endfilter -%}
 
 ---
 apiVersion: tekton.dev/v1beta1
@@ -35,8 +39,23 @@ spec:
   {% endif %}
   pipelineRef:
     name: {{pipeline_name}}
-  {%if workspaces %}
+  params:
+    {% raw -%}
+    - name: repo_url
+      value: {{repo_url}}
+    - name: revision
+      value: {{revision}}
+    {% endraw %}
   workspaces:
+    - name: source
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 500Mi
+  {%if workspaces %}
     {% for workspace in workspaces -%}
     - name: {{ workspace }}
       persistentvolumeclaim:

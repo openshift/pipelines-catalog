@@ -40,7 +40,7 @@ def read_resource_name_type(yamlfile):
 
 def check_document_start(text):
     if text[0:3] != "---":
-        text = "--- \n" + text
+        text = "---\n" + text
     return text
 
 
@@ -166,7 +166,7 @@ def process_task(taskdir,
                         resources=resources,
                         serviceAccountname=service_accountname))
 
-    return "--- \n".join(ret)
+    return "\n".join(ret)
 
 
 def generate_pipeline(taskdir, pipelinetemplate, presteptemplate):

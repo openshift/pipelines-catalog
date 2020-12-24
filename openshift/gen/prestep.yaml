@@ -1,4 +1,36 @@
+- name: fetch
+  taskRef:
+    name: git-clone
+  params:
+    - name: url
+      value: $(params.repo_url)
+    - name: revision
+      value: $(params.revision)
+  workspaces:
+    - name: output
+      workspace: source
+
+- name: yaml-lint
+  runAfter: [fetch]
+  taskRef:
+    name: yaml-lint
+  params:
+    - name: args
+      value: [".tekton", "task"]
+  workspaces:
+    - name: shared-workspace
+      workspace: source
+
+- name: kubectl-dry-run
+  runAfter: [fetch]
+  taskRef:
+    name: kubectl-dry-run
+  workspaces:
+    - name: source
+      workspace: source
+
 - name: prestep
+  runAfter: [kubectl-dry-run, yaml-lint]
   taskSpec:
     steps:
       - name: prestep-mind-the-gap

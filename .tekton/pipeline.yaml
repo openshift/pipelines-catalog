@@ -1,4 +1,4 @@
---- 
+---
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
@@ -113,7 +113,7 @@ spec:
       emptyDir: {}
     - name: envparams
       emptyDir: {}
---- 
+
 ---
 apiVersion: tekton.dev/v1alpha1
 kind: PipelineResource
@@ -134,8 +134,8 @@ spec:
   params:
     - name: url
       value: "image-registry.openshift-image-registry.svc:5000/{{namespace}}/s2i-java-11-pr"
---- 
---- 
+
+---
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
@@ -249,7 +249,7 @@ spec:
       emptyDir: {}
     - name: envparams
       emptyDir: {}
---- 
+
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -260,9 +260,9 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 500Mi
---- 
---- 
+      storage: 100Mi
+
+---
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
@@ -328,7 +328,7 @@ spec:
       emptyDir: {}
     - name: gen-source
       emptyDir: {}
---- 
+
 ---
 apiVersion: tekton.dev/v1alpha1
 kind: PipelineResource
@@ -351,8 +351,8 @@ spec:
   params:
     - name: url
       value: "image-registry.openshift-image-registry.svc:5000/{{namespace}}/s2i-go-pr"
---- 
---- 
+
+---
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
@@ -421,7 +421,7 @@ spec:
       emptyDir: {}
     - name: gen-source
       emptyDir: {}
---- 
+
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -432,9 +432,9 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 500Mi
---- 
---- 
+      storage: 100Mi
+
+---
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
@@ -549,7 +549,7 @@ spec:
       emptyDir: {}
     - name: envparams
       emptyDir: {}
---- 
+
 ---
 apiVersion: tekton.dev/v1alpha1
 kind: PipelineResource
@@ -572,8 +572,8 @@ spec:
   params:
     - name: url
       value: "image-registry.openshift-image-registry.svc:5000/{{namespace}}/s2i-java-8-pr"
---- 
---- 
+
+---
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
@@ -642,7 +642,7 @@ spec:
       emptyDir: {}
     - name: gen-source
       emptyDir: {}
---- 
+
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -653,9 +653,9 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 500Mi
---- 
---- 
+      storage: 100Mi
+
+---
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
@@ -724,7 +724,7 @@ spec:
       emptyDir: {}
     - name: gen-source
       emptyDir: {}
---- 
+
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -735,9 +735,9 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 500Mi
---- 
---- 
+      storage: 100Mi
+
+---
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
@@ -806,7 +806,7 @@ spec:
       emptyDir: {}
     - name: gen-source
       emptyDir: {}
---- 
+
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -818,8 +818,8 @@ spec:
   resources:
     requests:
       storage: 100Mi
---- 
---- 
+
+---
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
@@ -889,7 +889,7 @@ spec:
       emptyDir: {}
     - name: gen-source
       emptyDir: {}
---- 
+
 ---
 apiVersion: tekton.dev/v1alpha1
 kind: PipelineResource
@@ -912,8 +912,8 @@ spec:
   params:
     - name: url
       value: "image-registry.openshift-image-registry.svc:5000/{{namespace}}/s2i-dotnet-3-pr"
---- 
---- 
+
+---
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
@@ -982,7 +982,7 @@ spec:
       emptyDir: {}
     - name: gen-source
       emptyDir: {}
---- 
+
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -993,9 +993,9 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 500Mi
---- 
---- 
+      storage: 100Mi
+
+---
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
@@ -1065,7 +1065,7 @@ spec:
       emptyDir: {}
     - name: gen-source
       emptyDir: {}
---- 
+
 ---
 apiVersion: tekton.dev/v1alpha1
 kind: PipelineResource
@@ -1088,8 +1088,8 @@ spec:
   params:
     - name: url
       value: "image-registry.openshift-image-registry.svc:5000/{{namespace}}/s2i-dotnet-2-pr"
---- 
---- 
+
+---
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
@@ -1159,7 +1159,7 @@ spec:
       emptyDir: {}
     - name: gen-source
       emptyDir: {}
---- 
+
 ---
 apiVersion: tekton.dev/v1alpha1
 kind: PipelineResource
@@ -1182,8 +1182,8 @@ spec:
   params:
     - name: url
       value: "image-registry.openshift-image-registry.svc:5000/{{namespace}}/s2i-ruby-pr"
---- 
---- 
+
+---
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
@@ -1253,7 +1253,7 @@ spec:
       emptyDir: {}
     - name: gen-source
       emptyDir: {}
---- 
+
 ---
 apiVersion: tekton.dev/v1alpha1
 kind: PipelineResource
@@ -1276,8 +1276,8 @@ spec:
   params:
     - name: url
       value: "image-registry.openshift-image-registry.svc:5000/{{namespace}}/s2i-dotnet-1-pr"
---- 
---- 
+
+---
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
@@ -1342,7 +1342,7 @@ spec:
       emptyDir: {}
     - name: gen-source
       emptyDir: {}
---- 
+
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -1353,9 +1353,9 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 500Mi
---- 
---- 
+      storage: 100Mi
+
+---
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
@@ -1424,7 +1424,7 @@ spec:
       emptyDir: {}
     - name: gen-source
       emptyDir: {}
---- 
+
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -1435,8 +1435,8 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 500Mi
---- 
+      storage: 100Mi
+
 ---
 apiVersion: tekton.dev/v1beta1
 kind: Task
@@ -1507,7 +1507,7 @@ spec:
   volumes:
     - name: varlibcontainers
       emptyDir: {}
---- 
+
 ---
 apiVersion: tekton.dev/v1alpha1
 kind: PipelineResource
@@ -1530,8 +1530,8 @@ spec:
   params:
     - name: url
       value: "image-registry.openshift-image-registry.svc:5000/{{namespace}}/s2i-dotnet-1"
---- 
---- 
+
+---
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
@@ -1600,7 +1600,7 @@ spec:
       emptyDir: {}
     - name: gen-source
       emptyDir: {}
---- 
+
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -1611,9 +1611,9 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 500Mi
---- 
---- 
+      storage: 100Mi
+
+---
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
@@ -1683,7 +1683,7 @@ spec:
       emptyDir: {}
     - name: gen-source
       emptyDir: {}
---- 
+
 ---
 apiVersion: tekton.dev/v1alpha1
 kind: PipelineResource
@@ -1706,8 +1706,8 @@ spec:
   params:
     - name: url
       value: "image-registry.openshift-image-registry.svc:5000/{{namespace}}/s2i-php-pr"
---- 
---- 
+
+---
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
@@ -1776,7 +1776,7 @@ spec:
       emptyDir: {}
     - name: gen-source
       emptyDir: {}
---- 
+
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -1788,8 +1788,8 @@ spec:
   resources:
     requests:
       storage: 100Mi
---- 
---- 
+
+---
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
@@ -1859,7 +1859,7 @@ spec:
       emptyDir: {}
     - name: gen-source
       emptyDir: {}
---- 
+
 ---
 apiVersion: tekton.dev/v1alpha1
 kind: PipelineResource
@@ -1882,8 +1882,8 @@ spec:
   params:
     - name: url
       value: "image-registry.openshift-image-registry.svc:5000/{{namespace}}/s2i-python-2-pr"
---- 
---- 
+
+---
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
@@ -1953,7 +1953,7 @@ spec:
       emptyDir: {}
     - name: gen-source
       emptyDir: {}
---- 
+
 ---
 apiVersion: tekton.dev/v1alpha1
 kind: PipelineResource
@@ -1976,8 +1976,8 @@ spec:
   params:
     - name: url
       value: "image-registry.openshift-image-registry.svc:5000/{{namespace}}/s2i-python-3-pr"
---- 
---- 
+
+---
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
@@ -2047,7 +2047,7 @@ spec:
       emptyDir: {}
     - name: gen-source
       emptyDir: {}
---- 
+
 ---
 apiVersion: tekton.dev/v1alpha1
 kind: PipelineResource
@@ -2070,8 +2070,8 @@ spec:
   params:
     - name: url
       value: "image-registry.openshift-image-registry.svc:5000/{{namespace}}/s2i-nodejs-pr"
---- 
---- 
+
+---
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
@@ -2185,7 +2185,7 @@ spec:
       emptyDir: {}
     - name: envparams
       emptyDir: {}
---- 
+
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -2196,16 +2196,19 @@ spec:
     - ReadWriteOnce
   resources:
     requests:
-      storage: 500Mi
---- 
+      storage: 100Mi
+
 ---
 apiVersion: tekton.dev/v1beta1
 kind: Pipeline
 metadata:
   name: pipelines-catalog
 spec:
-  
+  params:
+    - name: repo_url
+    - name: revision
   workspaces:
+    - name: source
     - name: s2i-java-11-workspace
     - name: s2i-python-2-workspace
     - name: s2i-ruby-workspace
@@ -2218,8 +2221,6 @@ spec:
     - name: s2i-dotnet-1-workspace
     - name: s2i-java-8-workspace
     
-  
-  
   resources:
     - name: s2i-java-11-pr-repo
       type: git
@@ -2273,7 +2274,39 @@ spec:
   
   tasks:
 
+    - name: fetch
+      taskRef:
+        name: git-clone
+      params:
+        - name: url
+          value: $(params.repo_url)
+        - name: revision
+          value: $(params.revision)
+      workspaces:
+        - name: output
+          workspace: source
+
+    - name: yaml-lint
+      runAfter: [fetch]
+      taskRef:
+        name: yaml-lint
+      params:
+        - name: args
+          value: [".tekton", "task"]
+      workspaces:
+        - name: shared-workspace
+          workspace: source
+
+    - name: kubectl-dry-run
+      runAfter: [fetch]
+      taskRef:
+        name: kubectl-dry-run
+      workspaces:
+        - name: source
+          workspace: source
+
     - name: prestep
+      runAfter: [kubectl-dry-run, yaml-lint]
       taskSpec:
         steps:
           - name: prestep-mind-the-gap
@@ -2830,9 +2863,6 @@ spec:
       - name: source
         workspace: s2i-java-8-workspace
 
-
-
-
 ---
 apiVersion: tekton.dev/v1beta1
 kind: PipelineRun
@@ -2842,8 +2872,22 @@ spec:
   
   pipelineRef:
     name: pipelines-catalog
-  
+  params:
+    - name: repo_url
+      value: {{repo_url}}
+    - name: revision
+      value: {{revision}}
+    
   workspaces:
+    - name: source
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 500Mi
+  
     - name: s2i-java-11-workspace
       persistentvolumeclaim:
         claimName: s2i-java-11-workspace

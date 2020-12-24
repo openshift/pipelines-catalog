@@ -1,5 +1,5 @@
 PIPELINE_OUTPUT_FILE := .tekton/pipeline.yaml
-TEMPLATE_FILE := openshift/gen/pipeline.yaml.tmpl
+TEMPLATE_FILE := openshift/gen/pipeline.django.yaml
 PRESTEP_FILE := openshift/gen/prestep.yaml
 
 all: yamlcheck generate

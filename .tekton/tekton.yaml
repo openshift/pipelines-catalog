@@ -6,8 +6,6 @@ prerun:
 
 tasks:
   - git-clone
-  - yaml-lint
 
 files:
-  - kubectl-dry-run.yaml
   - pipeline.yaml

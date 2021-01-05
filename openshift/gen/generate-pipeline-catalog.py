@@ -111,10 +111,10 @@ def process_task(taskdir,
             continue
         ret.append(check_document_start(task.read_text()))
 
-        run = path / "run.yaml"
+        run = path / "step.yaml"
         if not run.exists():
             debug(
-                f"WARNING: there is no run.yaml file in {taskname}-{taskversion}"
+                f"WARNING: there is no step.yaml file in {taskname}-{taskversion}"
             )
             continue
 
@@ -146,7 +146,7 @@ def process_task(taskdir,
             if yamlfile.suffix != ".yaml":
                 continue
             if yamlfile.name.replace(yamlfile.suffix,
-                                     "") in ("pv", "config", "run"):
+                                     "") in ("pv", "config", "step"):
                 continue
             debug(f"Adding extras task {yamlfile}")
             ret.append(check_document_start(yamlfile.read_text()))

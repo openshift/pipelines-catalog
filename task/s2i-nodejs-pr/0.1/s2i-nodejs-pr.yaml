@@ -42,26 +42,20 @@ spec:
         - name: gen-source
           mountPath: /gen-source
     - name: build
-      image: quay.io/buildah/stable:v1.15.1
+      image: quay.io/buildah/stable:v1.17.0
       workingdir: /gen-source
-      command: ['buildah', 'bud', '--tls-verify=$(params.TLSVERIFY)', '--layers', '-f', '/gen-source/Dockerfile.gen', '-t', '$(resources.outputs.image.url)', '.']
+      command: ['buildah', 'bud', '--storage-driver=vfs', '--tls-verify=$(params.TLSVERIFY)', '--layers', '-f', '/gen-source/Dockerfile.gen', '-t', '$(resources.outputs.image.url)', '.']
       volumeMounts:
         - name: varlibcontainers
           mountPath: /var/lib/containers
         - name: gen-source
           mountPath: /gen-source
-      env:
-      - name: STORAGE_DRIVER
-        value: vfs
     - name: push
-      image: quay.io/buildah/stable:v1.15.1
-      command: ['buildah', 'push', '--tls-verify=$(params.TLSVERIFY)', '$(resources.outputs.image.url)', 'docker://$(resources.outputs.image.url)']
+      image: quay.io/buildah/stable:v1.17.0
+      command: ['buildah', 'push', '--storage-driver=vfs', '--tls-verify=$(params.TLSVERIFY)', '$(resources.outputs.image.url)', 'docker://$(resources.outputs.image.url)']
       volumeMounts:
         - name: varlibcontainers
           mountPath: /var/lib/containers
-      env:
-      - name: STORAGE_DRIVER
-        value: vfs
   volumes:
     - name: varlibcontainers
       emptyDir: {}

@@ -1,5 +1,7 @@
 # Pipelines Catalog
 
+Test CI IGNORE
+
 This repository contains a catalog of Tekton `Task` resources (and
 someday `Pipeline`s and `Resource`s), which are designed to be
 reusable in many pipelines.

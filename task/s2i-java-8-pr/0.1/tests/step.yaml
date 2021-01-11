@@ -1,0 +1,13 @@
+- name: s2i-java-8-pr
+  taskRef:
+    name: s2i-java-8-pr
+  resources:
+    outputs:
+      - name: image
+        resource: s2i-java-8-pr-image
+    inputs:
+      - name: source
+        resource: s2i-java-8-pr-repo
+  params:
+    - name: TLSVERIFY
+      value: "false"

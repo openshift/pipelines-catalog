@@ -1,0 +1,13 @@
+- name: s2i-nodejs-pr
+  taskRef:
+    name: s2i-nodejs-pr
+  resources:
+    outputs:
+      - name: image
+        resource: s2i-nodejs-pr-image
+    inputs:
+      - name: source
+        resource: s2i-nodejs-pr-repo
+  params:
+    - name: TLSVERIFY
+      value: "false"

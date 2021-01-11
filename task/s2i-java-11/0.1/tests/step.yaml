@@ -1,0 +1,29 @@
+- name: fetch-repository-s2i-java-11
+  taskRef:
+    name: git-clone
+  workspaces:
+    - name: output
+      workspace: s2i-java-11-workspace
+  params:
+    - name: url
+      value: https://github.com/piyush-garg/spring-petclinic
+    - name: subdirectory
+      value: ""
+    - name: deleteExisting
+      value: "true"
+    - name: revision
+      value: "main"
+
+- name: s2i-java-11-test
+  taskRef:
+    name: s2i-java-11
+  runAfter:
+    - fetch-repository-s2i-java-11
+  workspaces:
+    - name: source
+      workspace: s2i-java-11-workspace
+  params:
+    - name: TLSVERIFY
+      value: "false"
+    - name: IMAGE
+      value: "image-registry.openshift-image-registry.svc:5000/{{namespace}}/s2i-java-11"

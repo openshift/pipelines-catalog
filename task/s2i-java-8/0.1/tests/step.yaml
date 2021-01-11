@@ -1,0 +1,29 @@
+- name: fetch-repository-s2i-java-8
+  taskRef:
+    name: git-clone
+  workspaces:
+    - name: output
+      workspace: s2i-java-8-workspace
+  params:
+    - name: url
+      value: https://github.com/spring-projects/spring-petclinic
+    - name: subdirectory
+      value: ""
+    - name: deleteExisting
+      value: "true"
+    - name: revision
+      value: "d367e2b4b41a2de899b0f438bc984a7c1c011b77"
+
+- name: s2i-java-8-test
+  taskRef:
+    name: s2i-java-8
+  runAfter:
+    - fetch-repository-s2i-java-8
+  workspaces:
+    - name: source
+      workspace: s2i-java-8-workspace
+  params:
+    - name: TLSVERIFY
+      value: "false"
+    - name: IMAGE
+      value: "image-registry.openshift-image-registry.svc:5000/{{namespace}}/s2i-java-8"

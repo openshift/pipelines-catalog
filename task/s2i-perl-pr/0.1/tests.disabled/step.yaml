@@ -1,0 +1,15 @@
+- name: s2i-perl-pr
+  taskRef:
+    name: s2i-perl-pr
+  resources:
+    outputs:
+      - name: image
+        resource: s2i-perl-pr-image
+    inputs:
+      - name: source
+        resource: s2i-perl-pr-repo
+  params:
+    - name: TLSVERIFY
+      value: "false"
+    - name: PATH_CONTEXT
+      value: "examples/sample-test-app"

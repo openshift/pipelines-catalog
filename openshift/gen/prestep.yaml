@@ -1,0 +1,84 @@
+- name: fetch
+  taskRef:
+    name: git-clone
+  params:
+    - name: url
+      value: $(params.repo_url)
+    - name: revision
+      value: $(params.revision)
+  workspaces:
+    - name: output
+      workspace: source
+
+- name: yaml-lint
+  runAfter: [fetch]
+  workspaces:
+    - name: source
+      workspace: source
+  taskSpec:
+    workspaces:
+      - name: source
+    steps:
+      - name: yaml-lint
+        # we get bumped out when using hte official image with docker.io
+        # ratelimit so workaround this.
+        image: registry.access.redhat.com/ubi8/python-38
+        workingdir: $(workspaces.source.path)
+        script: |
+          pip install yamllint
+          yamllint .tekton/ task/
+
+- name: kubectl-dry-run
+  runAfter: [fetch]
+  taskSpec:
+    workspaces:
+      - name: source
+    steps:
+      - name: kubectl-apply-check
+        # TODO: find an UBI with kubectl
+        image: quay.io/openshift/origin-cli:4.6
+        workingdir: $(workspaces.source.path)
+        script: |
+          for i in task/*/*/;do kubectl apply -f ${i} --dry-run=client;done
+  workspaces:
+    - name: source
+      workspace: source
+
+- name: check-generated-yaml
+  runAfter: [fetch]
+  workspaces:
+    - name: source
+      workspace: source
+  taskSpec:
+    workspaces:
+      - name: source
+    steps:
+      - name: check-generated-yaml
+        workingdir: $(workspaces.source.path)
+        image: registry.access.redhat.com/ubi8/python-38
+        # For whatever reason, make check is not working, so let's do this with
+        # git filename instead which should be as a robust check and we don't
+        # have to care having to maintain a dockerfile for it.
+        script: |
+          #!/usr/bin/env bash
+          set -exu
+          CHANGED_FILES=($(git log HEAD --pretty="format:" --name-only  -1))
+          needregen=
+          for yaml in ${CHANGED_FILES[*]};do
+              [[ ${yaml} == .tekton/pipeline.yaml ]] && { exit 0 ;}
+              [[ ${yaml} == task/*/*yaml || ${yaml} == openshift/gen/*yaml ]] && needregen=1
+          done
+          [[ -n ${needregen} ]] && {
+              echo "There was some yaml modifications but pipeline.yaml wasn't generated"
+              echo "Rerun make generated"
+              exit  1
+          }
+
+- name: prestep
+  runAfter: [kubectl-dry-run, yaml-lint, check-generated-yaml]
+  taskSpec:
+    steps:
+      - name: prestep-mind-the-gap
+        image: registry.access.redhat.com/ubi8/ubi-minimal:8.2
+        script: |
+          echo "OK: pre-step has passed"

@@ -1,0 +1,13 @@
+- name: s2i-python-2-pr
+  taskRef:
+    name: s2i-python-2-pr
+  resources:
+    outputs:
+      - name: image
+        resource: s2i-python-2-pr-image
+    inputs:
+      - name: source
+        resource: s2i-python-2-pr-repo
+  params:
+    - name: TLSVERIFY
+      value: "false"

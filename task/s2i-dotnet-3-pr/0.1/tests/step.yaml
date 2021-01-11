@@ -1,0 +1,15 @@
+- name: s2i-dotnet-3-pr-run
+  taskRef:
+    name: s2i-dotnet-3-pr
+  resources:
+    outputs:
+      - name: image
+        resource: s2i-dotnet-3-pr-image
+    inputs:
+      - name: source
+        resource: s2i-dotnet-3-pr-repo
+  params:
+    - name: TLSVERIFY
+      value: "false"
+    - name: PATH_CONTEXT
+      value: "app"

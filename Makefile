@@ -14,3 +14,8 @@ yamlcheck:
 check:
 	@make generate PIPELINE_OUTPUT_FILE=/tmp/pipeline-check.yaml
 	@diff -u $(PIPELINE_OUTPUT_FILE) /tmp/pipeline-check.yaml || exit 1
+
+# need a cluster check
+apply-check: SHELL:=/bin/bash
+apply-check:
+	kubectl apply --dry-run=client -f <(sed -e 's,{{namespace}},pipelines-catalog,g' -e 's,{{repo_url}},https://github.com/openshift/pipelines-catalog,' -e 's,{{revision}},master,' .tekton/pipeline.yaml)

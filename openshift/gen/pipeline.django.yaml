@@ -26,7 +26,27 @@ spec:
 {% for step in steps -%}
 {{ step }}
 {% endfor -%}
-{% endfilter -%}
+{% endfilter %}
+  finally:
+    - name: finally
+      taskSpec:
+        steps:
+          - name: send-to-slack
+            env:
+              - name: SLACK_WEBHOOK_URL
+                valueFrom:
+                  secretKeyRef:
+                    name: slack-tektoncd-ci-webhook
+                    key: hook_url
+              - name: PIPELINERUN
+                valueFrom:
+                  fieldRef:
+                    fieldPath: metadata.labels['tekton.dev/pipelineRun']
+            image: quay.io/chmouel/tekton-asa-code:latest
+            script: |
+              {% filter indent(width=14) -%}
+{% include "slack-notifications.py" %}
+{% endfilter %}
 
 ---
 apiVersion: tekton.dev/v1beta1

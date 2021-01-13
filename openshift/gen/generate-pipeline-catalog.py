@@ -151,7 +151,9 @@ def process_task(taskdir,
             debug(f"Adding extras task {yamlfile}")
             ret.append(check_document_start(yamlfile.read_text()))
 
-    template = jinja2.Template(open(pipelinetemplate).read())
+    template_str = open(pipelinetemplate).read()
+    template = jinja2.Environment(loader=jinja2.FileSystemLoader(
+        "openshift/gen")).from_string(template_str)
     if privileged:
         service_accountname = SERVICE_ACCOUNT_PRIV
     else:

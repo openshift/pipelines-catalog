@@ -9,3 +9,6 @@ tasks:
 
 files:
   - pipeline.yaml
+
+secrets:
+  - slack-tektoncd-ci-webhook

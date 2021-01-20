@@ -42,12 +42,25 @@ spec:
                 valueFrom:
                   fieldRef:
                     fieldPath: metadata.labels['tekton.dev/pipelineRun']
+              {% raw -%}
+              - name: GITHUB_PULL_LABEL
+                value: "{{pull_request.labels}}"
+              - name: LABEL_TO_CHECK
+                value: "nightly-ci"
+              - name: SUCCESS_URL_ICON
+                value: "https://github.com/tektoncd.png"
+              - name: FAILURE_URL_ICON
+                value: "https://www.vhv.rs/dpng/d/415-4154815_grumpy-cat-png-photos-grumpy-cat-png-transparent.png"
+              - name: SUCCESS_SUBJECT
+                value: "Pipelines Catalog CI ran successfull on {{pull_request.html_url}} :pipelinedance: :dancing-penguin: :yay2:"
+              - name: FAILURE_SUBJECT
+                value: "Pipelines Catalog CI has failed on {{pull_request.html_url}} :fb-sad: :crying_cat_face: :crying:"
+              - name: LOG_URL
+                value: "{{openshift_console_pipelinerun_href}}"
+              {% endraw %}
             image: quay.io/chmouel/tekton-asa-code:latest
-            script: |
-              {% filter indent(width=14) -%}
-{% include "slack-notifications.py" %}
-{% endfilter %}
-
+            command: ["/code/misc/send-slack-notifications.py"]
+            
 ---
 apiVersion: tekton.dev/v1beta1
 kind: PipelineRun

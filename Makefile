@@ -4,12 +4,16 @@ PRESTEP_FILE := openshift/gen/prestep.yaml
 
 all: yamlcheck generate
 
-generate:
-	./openshift/gen/generate-pipeline-catalog.py task/ $(TEMPLATE_FILE) $(PRESTEP_FILE) > $(PIPELINE_OUTPUT_FILE)
+venv:
+	@set -x;[ -d .venv/ ] || { python3 -mvenv .venv && ./.venv/bin/pip install -r requirements.txt || rm -rf .venv ;}
+.PHONY: generate
+
+generate: venv
+	.venv/bin/python3 ./openshift/gen/generate-pipeline-catalog.py task/ $(TEMPLATE_FILE) $(PRESTEP_FILE) > $(PIPELINE_OUTPUT_FILE)
 .PHONY: generate
 
 yamlcheck:
-	yamllint -c ~/.yamllint task
+	yamllint task
 
 check:
 	@make generate PIPELINE_OUTPUT_FILE=/tmp/pipeline-check.yaml

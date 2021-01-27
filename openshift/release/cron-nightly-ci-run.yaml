@@ -1,0 +1,19 @@
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: pipelines-catalog-nightly-ci-run
+spec:
+  failedJobsHistoryLimit: 1
+  successfulJobsHistoryLimit: 1
+  concurrencyPolicy: Replace
+  schedule: "0 0 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: tkn-aac-sa
+          containers:
+          - name: cleanup
+            image: quay.io/openshift/origin-cli:4.6
+            command: ["/bin/bash", "-c", "kubectl delete pipelinerun pipelines-catalog-nightly || true;kubectl create -f https://raw.githubusercontent.com/openshift/pipelines-catalog/master/openshift/release/nightly-ci-run.yaml"]
+          restartPolicy: Never

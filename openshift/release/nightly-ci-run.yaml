@@ -1,0 +1,69 @@
+---
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  name: pipelines-catalog-nightly
+spec:
+  pipelineSpec:
+    workspaces:
+      - name: source
+    tasks:
+      - name: fetch-repository
+        taskRef:
+          name: git-clone
+        workspaces:
+          - name: output
+            workspace: source
+        params:
+          - name: url
+            value: https://github.com/openshift/pipelines-catalog
+          - name: revision
+            value: master
+          - name: subdirectory
+            value: ""
+          - name: deleteExisting
+            value: "true"
+      - name: create-pr
+        runAfter:
+          - fetch-repository
+        workspaces:
+          - workspace: source
+            name: source
+        taskSpec:
+          workspaces:
+          - name: source
+          steps:
+            - name: create-pr
+              workingDir: $(workspaces.source.path)
+              env:
+                - name: HUB_VERSION
+                  value: "true"
+                - name: GITHUB_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: nightly-ci-github-hub-token
+                      key: hub-token              
+              image: gcr.io/tekton-releases/dogfooding/hub:latest
+              script: |
+                #!/usr/bin/env bash
+                set -xe
+
+                # Configure git email and name
+                git config user.email "pipelines-dev@redhat.com"
+                git config user.name "OpenShift Pipelines"
+                
+                ## Make sure we can push to the branch with our GITHUB_TOKEN (disable logging to not leak)
+                set +x
+                git remote set-url origin $(git remote get-url origin|sed "s,https://github.com/,https://${GITHUB_TOKEN}@github.com/,")
+                set -x
+                # Launch script
+                openshift/release/update-to-head.sh
+  workspaces:
+    - name: source
+      volumeClaimTemplate:
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 500Mi

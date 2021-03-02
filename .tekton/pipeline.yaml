@@ -2,391 +2,17 @@
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
-  name: buildah-pr
+  name: s2i-dotnet
   labels:
     app.kubernetes.io/version: "0.1"
   annotations:
-    tekton.dev/pipelines.minVersion: "0.14.3"
-    tekton.dev/tags: buildah
-    tekton.dev/displayName: "buildah pipelineresource"
-spec:
-  description: >-
-    Buildah task builds source into a container image and
-    then pushes it to a container registry.
-
-    Buildah Task builds source into a container image using Project Atomic's
-    Buildah build tool.It uses Buildah's support for building from Dockerfiles,
-    using its buildah bud command.This command executes the directives in the
-    Dockerfile to assemble a container image, then pushes that image to a
-    container registry.
-
-  results:
-    - name: IMAGE_DIGEST
-      description: Digest of the image just built.
-  params:
-    - name: BUILDER_IMAGE
-      description: The location of the buildah builder image.
-      default: quay.io/buildah/stable:v1.17.0
-    - name: DOCKERFILE
-      description: Path to the Dockerfile to build.
-      default: ./Dockerfile
-    - name: CONTEXT
-      description: Path to the directory to use as context.
-      default: .
-    - name: TLSVERIFY
-      description: Verify the TLS on the registry endpoint (for push/pull to a non-TLS registry)
-      default: "true"
-    - name: FORMAT
-      description: The format of the built container, oci or docker
-      default: "oci"
-  resources:
-    inputs:
-      - name: source
-        type: git
-    outputs:
-      - name: image
-        type: image
-  steps:
-    - name: build
-      image: $(params.BUILDER_IMAGE)
-      workingDir: $(resources.inputs.source.path)
-      command: ['buildah', 'bud', '--storage-driver=vfs', '--format=$(params.FORMAT)', '--tls-verify=$(params.TLSVERIFY)', '--layers', '-f', '$(params.DOCKERFILE)', '-t', '$(resources.outputs.image.url)', '$(params.CONTEXT)']
-      volumeMounts:
-        - name: varlibcontainers
-          mountPath: /var/lib/containers
-    - name: push
-      image: $(params.BUILDER_IMAGE)
-      workingDir: $(resources.inputs.source.path)
-      command: ['buildah', 'push', '--storage-driver=vfs', '--tls-verify=$(params.TLSVERIFY)', '--digestfile=$(resources.inputs.source.path)/image-digest', '$(resources.outputs.image.url)', 'docker://$(resources.outputs.image.url)']
-      volumeMounts:
-        - name: varlibcontainers
-          mountPath: /var/lib/containers
-    - name: digest-to-results
-      image: $(params.BUILDER_IMAGE)
-      script: cat $(resources.inputs.source.path)/image-digest | tee /tekton/results/IMAGE_DIGEST
-  volumes:
-    - name: varlibcontainers
-      emptyDir: {}
-
----
-apiVersion: tekton.dev/v1alpha1
-kind: PipelineResource
-metadata:
-  name: buildah-pr-nocode
-spec:
-  type: git
-  params:
-    - name: revision
-      value: master
-    - name: url
-      value: https://github.com/kelseyhightower/nocode
----
-apiVersion: tekton.dev/v1alpha1
-kind: PipelineResource
-metadata:
-  name: buildah-pr-image
-spec:
-  type: image
-  params:
-    - name: url
-      value: "image-registry.openshift-image-registry.svc:5000/{{namespace}}/s2i-dotnet-1"
-
----
-apiVersion: tekton.dev/v1beta1
-kind: Task
-metadata:
-  name: s2i-dotnet-1-pr
-  labels:
-    app.kubernetes.io/version: "0.1"
-  annotations:
-    tekton.dev/pipelines.minVersion: "0.11.3"
-    tekton.dev/tags: s2i, dotnet
-    tekton.dev/displayName: "s2i dotnet 1 pipelineresource"
-spec:
-  description: >-
-    s2i-dotnet-1-pr task fetches a Git repository and builds and
-    pushes a container image using S2I and a .NET Core 1 builder image.
-
-  results:
-    - name: IMAGE_DIGEST
-      description: Digest of the image just built.
-  params:
-    - name: BUILDER_IMAGE
-      description: The location of the buildah builder image.
-      default: quay.io/buildah/stable:v1.17.0
-    - name: MINOR_VERSION
-      description: The minor version of the .NET Core 1
-      default: '1'
-      type: string
-    - name: PATH_CONTEXT
-      description: The location of the path to run s2i from.
-      default: .
-      type: string
-    - name: TLSVERIFY
-      description: Verify the TLS on the registry endpoint (for push/pull to a non-TLS registry)
-      default: "true"
-      type: string
-  resources:
-    inputs:
-      - name: source
-        type: git
-    outputs:
-      - name: image
-        type: image
-  steps:
-    - name: generate
-      image: quay.io/openshift-pipeline/s2i
-      workingDir: $(resources.inputs.source.path)
-      command: ['s2i', 'build', '$(params.PATH_CONTEXT)', 'registry.access.redhat.com/dotnet/dotnetcore-1$(params.MINOR_VERSION)-rhel7', '--as-dockerfile', '/gen-source/Dockerfile.gen']
-      volumeMounts:
-        - name: gen-source
-          mountPath: /gen-source
-    - name: build
-      image: $(params.BUILDER_IMAGE)
-      workingdir: /gen-source
-      command: ['buildah', 'bud', '--storage-driver=vfs', '--tls-verify=$(params.TLSVERIFY)', '--layers', '-f', '/gen-source/Dockerfile.gen', '-t', '$(resources.outputs.image.url)', '.']
-      volumeMounts:
-        - name: varlibcontainers
-          mountPath: /var/lib/containers
-        - name: gen-source
-          mountPath: /gen-source
-    - name: push
-      image: $(params.BUILDER_IMAGE)
-      workingDir: $(resources.inputs.source.path)
-      command: ['buildah', 'push', '--storage-driver=vfs', '--tls-verify=$(params.TLSVERIFY)', '--digestfile=$(resources.inputs.source.path)/image-digest', '$(resources.outputs.image.url)', 'docker://$(resources.outputs.image.url)']
-      volumeMounts:
-        - name: varlibcontainers
-          mountPath: /var/lib/containers
-    - name: digest-to-results
-      image: $(params.BUILDER_IMAGE)
-      script: cat $(resources.inputs.source.path)/image-digest | tee /tekton/results/IMAGE_DIGEST
-  volumes:
-    - name: varlibcontainers
-      emptyDir: {}
-    - name: gen-source
-      emptyDir: {}
-
----
-apiVersion: tekton.dev/v1alpha1
-kind: PipelineResource
-metadata:
-  name: s2i-dotnet-1-pr-repo
-spec:
-  type: git
-  params:
-    - name: revision
-      value: dotnetcore-1.1
-    - name: url
-      value: https://github.com/redhat-developer/s2i-dotnetcore-ex
----
-apiVersion: tekton.dev/v1alpha1
-kind: PipelineResource
-metadata:
-  name: s2i-dotnet-1-pr-image
-spec:
-  type: image
-  params:
-    - name: url
-      value: "image-registry.openshift-image-registry.svc:5000/{{namespace}}/s2i-dotnet-1-pr"
-
----
-apiVersion: tekton.dev/v1beta1
-kind: Task
-metadata:
-  name: s2i-dotnet-1
-  labels:
-    app.kubernetes.io/version: "0.1"
-  annotations:
-    tekton.dev/pipelines.minVersion: "0.11.3"
+    tekton.dev/pipelines.minVersion: "0.19"
     tekton.dev/tags: s2i, dotnet, workspace
-    tekton.dev/displayName: "s2i dotnet 1"
+    tekton.dev/displayName: "s2i dotnet"
 spec:
   description: >-
-    s2i-dotnet-1 task clones a Git repository and builds and
-    pushes a container image using S2I and a .NET Core 1 builder image.
-
-  results:
-    - name: IMAGE_DIGEST
-      description: Digest of the image just built.
-  params:
-    - name: MINOR_VERSION
-      description: The minor version of the .NET Core 1
-      default: '1'
-      type: string
-    - name: PATH_CONTEXT
-      description: The location of the path to run s2i from.
-      default: .
-      type: string
-    - name: TLSVERIFY
-      description: Verify the TLS on the registry endpoint (for push/pull to a non-TLS registry)
-      default: "true"
-      type: string
-    - name: IMAGE
-      description: Location of the repo where image has to be pushed
-      type: string
-    - name: BUILDER_IMAGE
-      description: The location of the buildah builder image.
-      default: quay.io/buildah/stable:v1.17.0
-  workspaces:
-    - name: source
-      mountPath: /workspace/source
-  steps:
-    - name: generate
-      image: quay.io/openshift-pipeline/s2i
-      workingdir: $(workspaces.source.path)
-      command: ['s2i', 'build', '$(params.PATH_CONTEXT)', 'registry.access.redhat.com/dotnet/dotnetcore-1$(params.MINOR_VERSION)-rhel7', '--as-dockerfile', '/gen-source/Dockerfile.gen']
-      volumeMounts:
-        - name: gen-source
-          mountPath: /gen-source
-    - name: build
-      image: $(params.BUILDER_IMAGE)
-      workingdir: /gen-source
-      command: ['buildah', 'bud', '--storage-driver=vfs', '--tls-verify=$(params.TLSVERIFY)', '--layers', '-f', '/gen-source/Dockerfile.gen', '-t', '$(params.IMAGE)', '.']
-      volumeMounts:
-        - name: varlibcontainers
-          mountPath: /var/lib/containers
-        - name: gen-source
-          mountPath: /gen-source
-    - name: push
-      image: $(params.BUILDER_IMAGE)
-      command: ['buildah', 'push', '--storage-driver=vfs', '--tls-verify=$(params.TLSVERIFY)', '--digestfile=$(workspaces.source.path)/image-digest', '$(params.IMAGE)', 'docker://$(params.IMAGE)']
-      volumeMounts:
-        - name: varlibcontainers
-          mountPath: /var/lib/containers
-    - name: digest-to-results
-      image: $(params.BUILDER_IMAGE)
-      script: cat $(workspaces.source.path)/image-digest | tee /tekton/results/IMAGE_DIGEST
-  volumes:
-    - name: varlibcontainers
-      emptyDir: {}
-    - name: gen-source
-      emptyDir: {}
-
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: s2i-dotnet-1-workspace
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 100Mi
-
----
-apiVersion: tekton.dev/v1beta1
-kind: Task
-metadata:
-  name: s2i-dotnet-2-pr
-  labels:
-    app.kubernetes.io/version: "0.1"
-  annotations:
-    tekton.dev/pipelines.minVersion: "0.11.3"
-    tekton.dev/tags: s2i, dotnet
-    tekton.dev/displayName: "s2i dotnet 2 pipelineresource"
-spec:
-  description: >-
-    s2i-dotnet-2-pr task fetches a Git repository and builds and
-    pushes a container image using S2I and a .NET Core 2 builder image.
-
-  results:
-    - name: IMAGE_DIGEST
-      description: Digest of the image just built.
-  params:
-    - name: MINOR_VERSION
-      description: The minor version of the .NET Core 2
-      default: '2'
-      type: string
-    - name: PATH_CONTEXT
-      description: The location of the path to run s2i from.
-      default: .
-      type: string
-    - name: TLSVERIFY
-      description: Verify the TLS on the registry endpoint (for push/pull to a non-TLS registry)
-      default: "true"
-      type: string
-    - name: BUILDER_IMAGE
-      description: The location of the buildah builder image.
-      default: quay.io/buildah/stable:v1.17.0
-  resources:
-    inputs:
-      - name: source
-        type: git
-    outputs:
-      - name: image
-        type: image
-  steps:
-    - name: generate
-      image: quay.io/openshift-pipeline/s2i
-      workingDir: $(resources.inputs.source.path)
-      command: ['s2i', 'build', '$(params.PATH_CONTEXT)', 'registry.access.redhat.com/dotnet/dotnet-2$(params.MINOR_VERSION)-rhel7', '--as-dockerfile', '/gen-source/Dockerfile.gen']
-      volumeMounts:
-        - name: gen-source
-          mountPath: /gen-source
-    - name: build
-      image: $(params.BUILDER_IMAGE)
-      workingdir: /gen-source
-      command: ['buildah', 'bud', '--storage-driver=vfs', '--tls-verify=$(params.TLSVERIFY)', '--layers', '-f', '/gen-source/Dockerfile.gen', '-t', '$(resources.outputs.image.url)', '.']
-      volumeMounts:
-        - name: varlibcontainers
-          mountPath: /var/lib/containers
-        - name: gen-source
-          mountPath: /gen-source
-    - name: push
-      image: $(params.BUILDER_IMAGE)
-      workingDir: $(resources.inputs.source.path)
-      command: ['buildah', 'push', '--storage-driver=vfs', '--tls-verify=$(params.TLSVERIFY)', '--digestfile=$(resources.inputs.source.path)/image-digest', '$(resources.outputs.image.url)', 'docker://$(resources.outputs.image.url)']
-      volumeMounts:
-        - name: varlibcontainers
-          mountPath: /var/lib/containers
-    - name: digest-to-results
-      image: $(params.BUILDER_IMAGE)
-      script: cat $(resources.inputs.source.path)/image-digest | tee /tekton/results/IMAGE_DIGEST
-  volumes:
-    - name: varlibcontainers
-      emptyDir: {}
-    - name: gen-source
-      emptyDir: {}
-
----
-apiVersion: tekton.dev/v1alpha1
-kind: PipelineResource
-metadata:
-  name: s2i-dotnet-2-pr-repo
-spec:
-  type: git
-  params:
-    - name: revision
-      value: dotnetcore-2.2
-    - name: url
-      value: https://github.com/redhat-developer/s2i-dotnetcore-ex
----
-apiVersion: tekton.dev/v1alpha1
-kind: PipelineResource
-metadata:
-  name: s2i-dotnet-2-pr-image
-spec:
-  type: image
-  params:
-    - name: url
-      value: "image-registry.openshift-image-registry.svc:5000/{{namespace}}/s2i-dotnet-2-pr"
-
----
-apiVersion: tekton.dev/v1beta1
-kind: Task
-metadata:
-  name: s2i-dotnet-2
-  labels:
-    app.kubernetes.io/version: "0.1"
-  annotations:
-    tekton.dev/pipelines.minVersion: "0.11.3"
-    tekton.dev/tags: s2i, dotnet, workspace
-    tekton.dev/displayName: "s2i dotnet 2"
-spec:
-  description: >-
-    s2i-dotnet-2 task clones a Git repository and builds and
-    pushes a container image using S2I and a .NET Core 2 builder image.
+    s2i-dotnet task fetches a Git repository and builds and
+    pushes a container image using S2I and a .NET Core builder image.
 
   results:
     - name: IMAGE_DIGEST
@@ -395,9 +21,9 @@ spec:
     - name: BUILDER_IMAGE
       description: The location of the buildah builder image.
       default: quay.io/buildah/stable:v1.17.0
-    - name: MINOR_VERSION
-      description: The minor version of the .NET Core 2
-      default: '2'
+    - name: VERSION
+      description: The tag of .NET imagestream for .NET version
+      default: '3.1-ubi8'
       type: string
     - name: PATH_CONTEXT
       description: The location of the path to run s2i from.
@@ -417,190 +43,7 @@ spec:
     - name: generate
       image: quay.io/openshift-pipeline/s2i
       workingdir: $(workspaces.source.path)
-      command: ['s2i', 'build', '$(params.PATH_CONTEXT)', 'registry.access.redhat.com/dotnet/dotnet-2$(params.MINOR_VERSION)-rhel7', '--as-dockerfile', '/gen-source/Dockerfile.gen']
-      volumeMounts:
-        - name: gen-source
-          mountPath: /gen-source
-    - name: build
-      image: $(params.BUILDER_IMAGE)
-      workingdir: /gen-source
-      command: ['buildah', 'bud', '--storage-driver=vfs', '--tls-verify=$(params.TLSVERIFY)', '--layers', '-f', '/gen-source/Dockerfile.gen', '-t', '$(params.IMAGE)', '.']
-      volumeMounts:
-        - name: varlibcontainers
-          mountPath: /var/lib/containers
-        - name: gen-source
-          mountPath: /gen-source
-    - name: push
-      image: $(params.BUILDER_IMAGE)
-      command: ['buildah', 'push', '--storage-driver=vfs', '--tls-verify=$(params.TLSVERIFY)', '--digestfile=$(workspaces.source.path)/image-digest', '$(params.IMAGE)', 'docker://$(params.IMAGE)']
-      volumeMounts:
-        - name: varlibcontainers
-          mountPath: /var/lib/containers
-    - name: digest-to-results
-      image: $(params.BUILDER_IMAGE)
-      script: cat $(workspaces.source.path)/image-digest | tee /tekton/results/IMAGE_DIGEST
-  volumes:
-    - name: varlibcontainers
-      emptyDir: {}
-    - name: gen-source
-      emptyDir: {}
-
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: s2i-dotnet-2-workspace
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 100Mi
-
----
-apiVersion: tekton.dev/v1beta1
-kind: Task
-metadata:
-  name: s2i-dotnet-3-pr
-  labels:
-    app.kubernetes.io/version: "0.1"
-  annotations:
-    tekton.dev/pipelines.minVersion: "0.11.3"
-    tekton.dev/tags: s2i, dotnet
-    tekton.dev/displayName: "s2i dotnet 3 pipelineresource"
-spec:
-  description: >-
-    s2i-dotnet-3-pr task fetches a Git repository and builds and
-    pushes a container image using S2I and a .NET Core 3 builder image.
-
-  results:
-    - name: IMAGE_DIGEST
-      description: Digest of the image just built.
-  params:
-    - name: MINOR_VERSION
-      description: The minor version of the .NET Core 3
-      default: '1'
-      type: string
-    - name: PATH_CONTEXT
-      description: The location of the path to run s2i from.
-      default: .
-      type: string
-    - name: TLSVERIFY
-      description: Verify the TLS on the registry endpoint (for push/pull to a non-TLS registry)
-      default: "true"
-      type: string
-    - name: BUILDER_IMAGE
-      description: The location of the buildah builder image.
-      default: quay.io/buildah/stable:v1.17.0
-  resources:
-    inputs:
-      - name: source
-        type: git
-    outputs:
-      - name: image
-        type: image
-  steps:
-    - name: generate
-      image: quay.io/openshift-pipeline/s2i
-      workingDir: $(resources.inputs.source.path)
-      command: ['s2i', 'build', '$(params.PATH_CONTEXT)', 'image-registry.openshift-image-registry.svc:5000/openshift/dotnet:3.$(params.MINOR_VERSION)', '--as-dockerfile', '/gen-source/Dockerfile.gen']
-      volumeMounts:
-        - name: gen-source
-          mountPath: /gen-source
-    - name: build
-      image: $(params.BUILDER_IMAGE)
-      workingdir: /gen-source
-      command: ['buildah', 'bud', '--storage-driver=vfs', '--tls-verify=$(params.TLSVERIFY)', '--layers', '-f', '/gen-source/Dockerfile.gen', '-t', '$(resources.outputs.image.url)', '.']
-      volumeMounts:
-        - name: varlibcontainers
-          mountPath: /var/lib/containers
-        - name: gen-source
-          mountPath: /gen-source
-    - name: push
-      workingDir: $(resources.inputs.source.path)
-      image: $(params.BUILDER_IMAGE)
-      command: ['buildah', 'push', '--storage-driver=vfs', '--tls-verify=$(params.TLSVERIFY)', '--digestfile=$(resources.inputs.source.path)/image-digest', '$(resources.outputs.image.url)', 'docker://$(resources.outputs.image.url)']
-      volumeMounts:
-        - name: varlibcontainers
-          mountPath: /var/lib/containers
-    - name: digest-to-results
-      image: $(params.BUILDER_IMAGE)
-      script: cat $(resources.inputs.source.path)/image-digest | tee /tekton/results/IMAGE_DIGEST
-  volumes:
-    - name: varlibcontainers
-      emptyDir: {}
-    - name: gen-source
-      emptyDir: {}
-
----
-apiVersion: tekton.dev/v1alpha1
-kind: PipelineResource
-metadata:
-  name: s2i-dotnet-3-pr-repo
-spec:
-  type: git
-  params:
-    - name: revision
-      value: "dotnetcore-3.1"
-    - name: url
-      value: https://github.com/redhat-developer/s2i-dotnetcore-ex
----
-apiVersion: tekton.dev/v1alpha1
-kind: PipelineResource
-metadata:
-  name: s2i-dotnet-3-pr-image
-spec:
-  type: image
-  params:
-    - name: url
-      value: "image-registry.openshift-image-registry.svc:5000/{{namespace}}/s2i-dotnet-3-pr"
-
----
-apiVersion: tekton.dev/v1beta1
-kind: Task
-metadata:
-  name: s2i-dotnet-3
-  labels:
-    app.kubernetes.io/version: "0.1"
-  annotations:
-    tekton.dev/pipelines.minVersion: "0.11.3"
-    tekton.dev/tags: s2i, dotnet, workspace
-    tekton.dev/displayName: "s2i dotnet 3"
-spec:
-  description: >-
-    s2i-dotnet-3 task fetches a Git repository and builds and
-    pushes a container image using S2I and a .NET Core 3 builder image.
-
-  results:
-    - name: IMAGE_DIGEST
-      description: Digest of the image just built.
-  params:
-    - name: BUILDER_IMAGE
-      description: The location of the buildah builder image.
-      default: quay.io/buildah/stable:v1.17.0
-    - name: MINOR_VERSION
-      description: The minor version of the .NET Core 3
-      default: '1'
-      type: string
-    - name: PATH_CONTEXT
-      description: The location of the path to run s2i from.
-      default: .
-      type: string
-    - name: TLSVERIFY
-      description: Verify the TLS on the registry endpoint (for push/pull to a non-TLS registry)
-      default: "true"
-      type: string
-    - name: IMAGE
-      description: Location of the repo where image has to be pushed
-      type: string
-  workspaces:
-    - name: source
-      mountPath: /workspace/source
-  steps:
-    - name: generate
-      image: quay.io/openshift-pipeline/s2i
-      workingdir: $(workspaces.source.path)
-      command: ['s2i', 'build', '$(params.PATH_CONTEXT)', 'image-registry.openshift-image-registry.svc:5000/openshift/dotnet:3.$(params.MINOR_VERSION)', '--as-dockerfile', '/gen-source/Dockerfile.gen']
+      command: ['s2i', 'build', '$(params.PATH_CONTEXT)', 'image-registry.openshift-image-registry.svc:5000/openshift/dotnet:$(params.VERSION)', '--as-dockerfile', '/gen-source/Dockerfile.gen']
       volumeMounts:
         - name: gen-source
           mountPath: /gen-source
@@ -633,108 +76,13 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: s2i-dotnet-3-workspace
+  name: s2i-dotnet-workspace
 spec:
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
       storage: 100Mi
-
----
-apiVersion: tekton.dev/v1beta1
-kind: Task
-metadata:
-  name: s2i-go-pr
-  labels:
-    app.kubernetes.io/version: "0.1"
-  annotations:
-    tekton.dev/pipelines.minVersion: "0.11.3"
-    tekton.dev/tags: s2i, go
-    tekton.dev/displayName: "s2i go pipelineresource"
-spec:
-  description: >-
-    s2i-go-pr task fetches a Git repository and builds and
-    pushes a container image using S2I and a Go builder image.
-
-  results:
-    - name: IMAGE_DIGEST
-      description: Digest of the image just built.
-  params:
-    - name: PATH_CONTEXT
-      description: The location of the path to run s2i from.
-      default: .
-      type: string
-    - name: TLSVERIFY
-      description: Verify the TLS on the registry endpoint (for push/pull to a non-TLS registry)
-      default: "true"
-      type: string
-    - name: BUILDER_IMAGE
-      description: The location of the buildah builder image.
-      default: quay.io/buildah/stable:v1.17.0
-  resources:
-    inputs:
-      - name: source
-        type: git
-    outputs:
-      - name: image
-        type: image
-  steps:
-    - name: generate
-      image: quay.io/openshift-pipeline/s2i
-      workingDir: $(resources.inputs.source.path)
-      command: ['s2i', 'build', '$(params.PATH_CONTEXT)', 'registry.access.redhat.com/devtools/go-toolset-rhel7', '--as-dockerfile', '/gen-source/Dockerfile.gen']
-      volumeMounts:
-        - name: gen-source
-          mountPath: /gen-source
-    - name: build
-      image: $(params.BUILDER_IMAGE)
-      workingdir: /gen-source
-      command: ['buildah', 'bud', '--storage-driver=vfs', '--tls-verify=$(params.TLSVERIFY)', '--layers', '-f', '/gen-source/Dockerfile.gen', '-t', '$(resources.outputs.image.url)', '.']
-      volumeMounts:
-        - name: varlibcontainers
-          mountPath: /var/lib/containers
-        - name: gen-source
-          mountPath: /gen-source
-    - name: push
-      image: $(params.BUILDER_IMAGE)
-      workingDir: $(resources.inputs.source.path)
-      command: ['buildah', 'push', '--storage-driver=vfs', '--tls-verify=$(params.TLSVERIFY)', '--digestfile=$(resources.inputs.source.path)/image-digest', '$(resources.outputs.image.url)', 'docker://$(resources.outputs.image.url)']
-      volumeMounts:
-        - name: varlibcontainers
-          mountPath: /var/lib/containers
-    - name: digest-to-results
-      image: $(params.BUILDER_IMAGE)
-      script: cat $(resources.inputs.source.path)/image-digest | tee /tekton/results/IMAGE_DIGEST
-  volumes:
-    - name: varlibcontainers
-      emptyDir: {}
-    - name: gen-source
-      emptyDir: {}
-
----
-apiVersion: tekton.dev/v1alpha1
-kind: PipelineResource
-metadata:
-  name: s2i-go-pr-repo
-spec:
-  type: git
-  params:
-    - name: revision
-      value: master
-    - name: url
-      value: https://github.com/sclorg/golang-ex
----
-apiVersion: tekton.dev/v1alpha1
-kind: PipelineResource
-metadata:
-  name: s2i-go-pr-image
-spec:
-  type: image
-  params:
-    - name: url
-      value: "image-registry.openshift-image-registry.svc:5000/{{namespace}}/s2i-go-pr"
-
 ---
 apiVersion: tekton.dev/v1beta1
 kind: Task
@@ -743,7 +91,7 @@ metadata:
   labels:
     app.kubernetes.io/version: "0.1"
   annotations:
-    tekton.dev/pipelines.minVersion: "0.11.3"
+    tekton.dev/pipelines.minVersion: "0.19"
     tekton.dev/tags: s2i, go, workspace
     tekton.dev/displayName: "s2i go"
 spec:
@@ -755,6 +103,10 @@ spec:
     - name: IMAGE_DIGEST
       description: Digest of the image just built.
   params:
+    - name: VERSION
+      description: The tag of go imagestream for go version
+      default: '1.14.7-ubi8'
+      type: string
     - name: PATH_CONTEXT
       description: The location of the path to run s2i from.
       default: .
@@ -776,7 +128,7 @@ spec:
     - name: generate
       image: quay.io/openshift-pipeline/s2i
       workingdir: $(workspaces.source.path)
-      command: ['s2i', 'build', '$(params.PATH_CONTEXT)', 'registry.access.redhat.com/devtools/go-toolset-rhel7', '--as-dockerfile', '/gen-source/Dockerfile.gen']
+      command: ['s2i', 'build', '$(params.PATH_CONTEXT)', 'image-registry.openshift-image-registry.svc:5000/openshift/golang:$(params.VERSION)', '--as-dockerfile', '/gen-source/Dockerfile.gen']
       volumeMounts:
         - name: gen-source
           mountPath: /gen-source
@@ -816,607 +168,106 @@ spec:
   resources:
     requests:
       storage: 100Mi
-
 ---
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
-  name: s2i-java-11-pr
+  name: s2i-java
   labels:
     app.kubernetes.io/version: "0.1"
   annotations:
-    tekton.dev/pipelines.minVersion: "0.11.3"
-    tekton.dev/tags: s2i, java
-    tekton.dev/displayName: "s2i java 11 pipelineresource"
-spec:
-  description: >-
-    s2i-java-11-pr task fetches a Git repository and builds and
-    pushes a container image using S2I and a Java 11 builder image.
-
-  results:
-    - name: IMAGE_DIGEST
-      description: Digest of the image just built.
-  params:
-    - name: PATH_CONTEXT
-      description: The location of the path to run s2i from
-      default: .
-      type: string
-    - name: TLSVERIFY
-      description: Verify the TLS on the registry endpoint (for push/pull to a non-TLS registry)
-      default: "true"
-      type: string
-    - name: MAVEN_ARGS_APPEND
-      description: Additional Maven arguments
-      default: ""
-      type: string
-    - name: MAVEN_CLEAR_REPO
-      description: Remove the Maven repository after the artifact is built
-      default: "false"
-      type: string
-    - name: MAVEN_MIRROR_URL
-      description: The base URL of a mirror used for retrieving artifacts
-      default: ""
-      type: string
-    - name: BUILDER_IMAGE
-      description: The location of the buildah builder image.
-      default: quay.io/buildah/stable:v1.17.0
-  resources:
-    inputs:
-      - name: source
-        type: git
-    outputs:
-      - name: image
-        type: image
-  steps:
-    - name: gen-env-file
-      image: quay.io/openshift-pipeline/s2i
-      workingdir: /env-params
-      command:
-        - '/bin/sh'
-        - '-c'
-      args:
-        - |-
-          echo "MAVEN_CLEAR_REPO=$(params.MAVEN_CLEAR_REPO)" > env-file
-
-          [[ '$(params.MAVEN_ARGS_APPEND)' != "" ]] &&
-            echo "MAVEN_ARGS_APPEND=$(params.MAVEN_ARGS_APPEND)" >> env-file
-
-          [[ '$(params.MAVEN_MIRROR_URL)' != "" ]] &&
-            echo "MAVEN_MIRROR_URL=$(params.MAVEN_MIRROR_URL)" >> env-file
-
-          echo "Generated Env file"
-          echo "------------------------------"
-          cat env-file
-          echo "------------------------------"
-      volumeMounts:
-        - name: envparams
-          mountPath: /env-params
-    - name: generate
-      image: quay.io/openshift-pipeline/s2i
-      workingDir: $(resources.inputs.source.path)
-      command:
-        - 's2i'
-        - 'build'
-        - '$(params.PATH_CONTEXT)'
-        - 'registry.access.redhat.com/openjdk/openjdk-11-rhel7'
-        - '--image-scripts-url'
-        - 'image:///usr/local/s2i'
-        - '--as-dockerfile'
-        - '/gen-source/Dockerfile.gen'
-        - '--environment-file'
-        - '/env-params/env-file'
-      volumeMounts:
-        - name: gen-source
-          mountPath: /gen-source
-        - name: envparams
-          mountPath: /env-params
-    - name: build
-      image: $(params.BUILDER_IMAGE)
-      workingdir: /gen-source
-      command: ['buildah', 'bud', '--storage-driver=vfs', '--tls-verify=$(params.TLSVERIFY)', '--layers', '-f', '/gen-source/Dockerfile.gen', '-t', '$(resources.outputs.image.url)', '.']
-      volumeMounts:
-        - name: varlibcontainers
-          mountPath: /var/lib/containers
-        - name: gen-source
-          mountPath: /gen-source
-    - name: push
-      image: $(params.BUILDER_IMAGE)
-      workingDir: $(resources.inputs.source.path)
-      command: ['buildah', 'push', '--storage-driver=vfs', '--tls-verify=$(params.TLSVERIFY)', '--digestfile=$(resources.inputs.source.path)/image-digest', '$(resources.outputs.image.url)', 'docker://$(resources.outputs.image.url)']
-      volumeMounts:
-        - name: varlibcontainers
-          mountPath: /var/lib/containers
-    - name: digest-to-results
-      image: $(params.BUILDER_IMAGE)
-      script: cat $(resources.inputs.source.path)/image-digest | tee /tekton/results/IMAGE_DIGEST
-  volumes:
-    - name: varlibcontainers
-      emptyDir: {}
-    - name: gen-source
-      emptyDir: {}
-    - name: envparams
-      emptyDir: {}
-
----
-apiVersion: tekton.dev/v1alpha1
-kind: PipelineResource
-metadata:
-  name: s2i-java-11-pr-repo
-spec:
-  type: git
-  params:
-    - name: url
-      value: https://github.com/piyush-garg/spring-petclinic
----
-apiVersion: tekton.dev/v1alpha1
-kind: PipelineResource
-metadata:
-  name: s2i-java-11-pr-image
-spec:
-  type: image
-  params:
-    - name: url
-      value: "image-registry.openshift-image-registry.svc:5000/{{namespace}}/s2i-java-11-pr"
-
----
-apiVersion: tekton.dev/v1beta1
-kind: Task
-metadata:
-  name: s2i-java-11
-  labels:
-    app.kubernetes.io/version: "0.1"
-  annotations:
-    tekton.dev/pipelines.minVersion: "0.11.3"
+    tekton.dev/pipelines.minVersion: "0.19"
     tekton.dev/tags: s2i, java, workspace
-    tekton.dev/displayName: "s2i java 11"
+    tekton.dev/displayName: "s2i java"
 spec:
   description: >-
-    s2i-java-11 task clones a Git repository and builds and
-    pushes a container image using S2I and a Java 11 builder image.
-
-  results:
-    - name: IMAGE_DIGEST
-      description: Digest of the image just built.
-  params:
-    - name: PATH_CONTEXT
-      description: The location of the path to run s2i from
-      default: .
-      type: string
-    - name: TLSVERIFY
-      description: Verify the TLS on the registry endpoint (for push/pull to a non-TLS registry)
-      default: "true"
-      type: string
-    - name: MAVEN_ARGS_APPEND
-      description: Additional Maven arguments
-      default: ""
-      type: string
-    - name: MAVEN_CLEAR_REPO
-      description: Remove the Maven repository after the artifact is built
-      default: "false"
-      type: string
-    - name: MAVEN_MIRROR_URL
-      description: The base URL of a mirror used for retrieving artifacts
-      default: ""
-      type: string
-    - name: IMAGE
-      description: Location of the repo where image has to be pushed
-      type: string
-    - name: BUILDER_IMAGE
-      description: The location of the buildah builder image.
-      default: quay.io/buildah/stable:v1.17.0
-  workspaces:
-    - name: source
-      mountPath: /workspace/source
-  steps:
-    - name: gen-env-file
-      image: quay.io/openshift-pipeline/s2i
-      workingdir: /env-params
-      command:
-        - '/bin/sh'
-        - '-c'
-      args:
-        - |-
-          echo "MAVEN_CLEAR_REPO=$(params.MAVEN_CLEAR_REPO)" > env-file
-
-          [[ '$(params.MAVEN_ARGS_APPEND)' != "" ]] &&
-            echo "MAVEN_ARGS_APPEND=$(params.MAVEN_ARGS_APPEND)" >> env-file
-
-          [[ '$(params.MAVEN_MIRROR_URL)' != "" ]] &&
-            echo "MAVEN_MIRROR_URL=$(params.MAVEN_MIRROR_URL)" >> env-file
-
-          echo "Generated Env file"
-          echo "------------------------------"
-          cat env-file
-          echo "------------------------------"
-      volumeMounts:
-        - name: envparams
-          mountPath: /env-params
-    - name: generate
-      image: quay.io/openshift-pipeline/s2i
-      workingdir: $(workspaces.source.path)
-      command:
-        - 's2i'
-        - 'build'
-        - '$(params.PATH_CONTEXT)'
-        - 'registry.access.redhat.com/openjdk/openjdk-11-rhel7'
-        - '--image-scripts-url'
-        - 'image:///usr/local/s2i'
-        - '--as-dockerfile'
-        - '/gen-source/Dockerfile.gen'
-        - '--environment-file'
-        - '/env-params/env-file'
-      volumeMounts:
-        - name: gen-source
-          mountPath: /gen-source
-        - name: envparams
-          mountPath: /env-params
-    - name: build
-      image: $(params.BUILDER_IMAGE)
-      workingdir: /gen-source
-      command: ['buildah', 'bud', '--storage-driver=vfs', '--tls-verify=$(params.TLSVERIFY)', '--layers', '-f', '/gen-source/Dockerfile.gen', '-t', '$(params.IMAGE)', '.']
-      volumeMounts:
-        - name: varlibcontainers
-          mountPath: /var/lib/containers
-        - name: gen-source
-          mountPath: /gen-source
-    - name: push
-      image: $(params.BUILDER_IMAGE)
-      workingDir: $(workspaces.source.path)
-      command: ['buildah', 'push', '--storage-driver=vfs', '--tls-verify=$(params.TLSVERIFY)', '--digestfile=$(workspaces.source.path)/image-digest', '$(params.IMAGE)', 'docker://$(params.IMAGE)']
-      volumeMounts:
-        - name: varlibcontainers
-          mountPath: /var/lib/containers
-    - name: digest-to-results
-      image: $(params.BUILDER_IMAGE)
-      script: cat $(workspaces.source.path)/image-digest | tee /tekton/results/IMAGE_DIGEST
-  volumes:
-    - name: varlibcontainers
-      emptyDir: {}
-    - name: gen-source
-      emptyDir: {}
-    - name: envparams
-      emptyDir: {}
-
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: s2i-java-11-workspace
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 100Mi
-
----
-apiVersion: tekton.dev/v1beta1
-kind: Task
-metadata:
-  name: s2i-java-8-pr
-  labels:
-    app.kubernetes.io/version: "0.1"
-  annotations:
-    tekton.dev/pipelines.minVersion: "0.11.3"
-    tekton.dev/tags: s2i, java
-    tekton.dev/displayName: "s2i java 8 pipelineresource"
-spec:
-  description: >-
-    s2i-java-8-pr task fetches a Git repository and builds and
-    pushes a container image using S2I and a Java 8 builder image.
-
-  results:
-    - name: IMAGE_DIGEST
-      description: Digest of the image just built.
-  params:
-    - name: PATH_CONTEXT
-      description: The location of the path to run s2i from
-      default: .
-      type: string
-    - name: TLSVERIFY
-      description: Verify the TLS on the registry endpoint (for push/pull to a non-TLS registry)
-      default: "true"
-      type: string
-    - name: MAVEN_ARGS_APPEND
-      description: Additional Maven arguments
-      default: ""
-      type: string
-    - name: MAVEN_CLEAR_REPO
-      description: Remove the Maven repository after the artifact is built
-      default: "false"
-      type: string
-    - name: MAVEN_MIRROR_URL
-      description: The base URL of a mirror used for retrieving artifacts
-      default: ""
-      type: string
-    - name: BUILDER_IMAGE
-      description: The location of the buildah builder image.
-      default: quay.io/buildah/stable:v1.17.0
-  resources:
-    inputs:
-      - name: source
-        type: git
-    outputs:
-      - name: image
-        type: image
-  steps:
-    - name: gen-env-file
-      image: quay.io/openshift-pipeline/s2i
-      workingdir: /env-params
-      command:
-        - '/bin/sh'
-        - '-c'
-      args:
-        - |-
-          echo "MAVEN_CLEAR_REPO=$(params.MAVEN_CLEAR_REPO)" > env-file
-
-          [[ '$(params.MAVEN_ARGS_APPEND)' != "" ]] &&
-            echo "MAVEN_ARGS_APPEND=$(params.MAVEN_ARGS_APPEND)" >> env-file
-
-          [[ '$(params.MAVEN_MIRROR_URL)' != "" ]] &&
-            echo "MAVEN_MIRROR_URL=$(params.MAVEN_MIRROR_URL)" >> env-file
-
-          echo "Generated Env file"
-          echo "------------------------------"
-          cat env-file
-          echo "------------------------------"
-      volumeMounts:
-        - name: envparams
-          mountPath: /env-params
-    - name: generate
-      image: quay.io/openshift-pipeline/s2i
-      workingDir: $(resources.inputs.source.path)
-      command:
-        - 's2i'
-        - 'build'
-        - '$(params.PATH_CONTEXT)'
-        - 'registry.access.redhat.com/redhat-openjdk-18/openjdk18-openshift'
-        - '--image-scripts-url'
-        - 'image:///usr/local/s2i'
-        - '--as-dockerfile'
-        - '/gen-source/Dockerfile.gen'
-        - '--environment-file'
-        - '/env-params/env-file'
-      volumeMounts:
-        - name: gen-source
-          mountPath: /gen-source
-        - name: envparams
-          mountPath: /env-params
-    - name: build
-      image: $(params.BUILDER_IMAGE)
-      workingdir: /gen-source
-      command: ['buildah', 'bud', '--storage-driver=vfs', '--tls-verify=$(params.TLSVERIFY)', '--layers', '-f', '/gen-source/Dockerfile.gen', '-t', '$(resources.outputs.image.url)', '.']
-      volumeMounts:
-        - name: varlibcontainers
-          mountPath: /var/lib/containers
-        - name: gen-source
-          mountPath: /gen-source
-    - name: push
-      image: $(params.BUILDER_IMAGE)
-      workingDir: $(resources.inputs.source.path)
-      command: ['buildah', 'push', '--storage-driver=vfs', '--tls-verify=$(params.TLSVERIFY)', '--digestfile=$(resources.inputs.source.path)/image-digest', '$(resources.outputs.image.url)', 'docker://$(resources.outputs.image.url)']
-      volumeMounts:
-        - name: varlibcontainers
-          mountPath: /var/lib/containers
-    - name: digest-to-results
-      image: $(params.BUILDER_IMAGE)
-      script: cat $(resources.inputs.source.path)/image-digest | tee /tekton/results/IMAGE_DIGEST
-  volumes:
-    - name: varlibcontainers
-      emptyDir: {}
-    - name: gen-source
-      emptyDir: {}
-    - name: envparams
-      emptyDir: {}
-
----
-apiVersion: tekton.dev/v1alpha1
-kind: PipelineResource
-metadata:
-  name: s2i-java-8-pr-repo
-spec:
-  type: git
-  params:
-    - name: revision
-      value: "d367e2b4b41a2de899b0f438bc984a7c1c011b77"
-    - name: url
-      value: https://github.com/spring-projects/spring-petclinic
----
-apiVersion: tekton.dev/v1alpha1
-kind: PipelineResource
-metadata:
-  name: s2i-java-8-pr-image
-spec:
-  type: image
-  params:
-    - name: url
-      value: "image-registry.openshift-image-registry.svc:5000/{{namespace}}/s2i-java-8-pr"
-
----
-apiVersion: tekton.dev/v1beta1
-kind: Task
-metadata:
-  name: s2i-java-8
-  labels:
-    app.kubernetes.io/version: "0.1"
-  annotations:
-    tekton.dev/pipelines.minVersion: "0.11.3"
-    tekton.dev/tags: s2i, java, workspace
-    tekton.dev/displayName: "s2i java 8"
-spec:
-  description: >-
-    s2i-java-8 task clones a Git repository and builds and
-    pushes a container image using S2I and a Java 8 builder image.
-
-  results:
-    - name: IMAGE_DIGEST
-      description: Digest of the image just built.
-  params:
-    - name: PATH_CONTEXT
-      description: The location of the path to run s2i from
-      default: .
-      type: string
-    - name: TLSVERIFY
-      description: Verify the TLS on the registry endpoint (for push/pull to a non-TLS registry)
-      default: "true"
-      type: string
-    - name: MAVEN_ARGS_APPEND
-      description: Additional Maven arguments
-      default: ""
-      type: string
-    - name: MAVEN_CLEAR_REPO
-      description: Remove the Maven repository after the artifact is built
-      default: "false"
-      type: string
-    - name: MAVEN_MIRROR_URL
-      description: The base URL of a mirror used for retrieving artifacts
-      default: ""
-      type: string
-    - name: IMAGE
-      description: Location of the repo where image has to be pushed
-      type: string
-    - name: BUILDER_IMAGE
-      description: The location of the buildah builder image.
-      default: quay.io/buildah/stable:v1.17.0
-  workspaces:
-    - name: source
-      mountPath: /workspace/source
-  steps:
-    - name: gen-env-file
-      image: quay.io/openshift-pipeline/s2i
-      workingdir: /env-params
-      command:
-        - '/bin/sh'
-        - '-c'
-      args:
-        - |-
-          echo "MAVEN_CLEAR_REPO=$(params.MAVEN_CLEAR_REPO)" > env-file
-
-          [[ '$(params.MAVEN_ARGS_APPEND)' != "" ]] &&
-            echo "MAVEN_ARGS_APPEND=$(params.MAVEN_ARGS_APPEND)" >> env-file
-
-          [[ '$(params.MAVEN_MIRROR_URL)' != "" ]] &&
-            echo "MAVEN_MIRROR_URL=$(params.MAVEN_MIRROR_URL)" >> env-file
-
-          echo "Generated Env file"
-          echo "------------------------------"
-          cat env-file
-          echo "------------------------------"
-      volumeMounts:
-        - name: envparams
-          mountPath: /env-params
-    - name: generate
-      image: quay.io/openshift-pipeline/s2i
-      workingdir: $(workspaces.source.path)
-      command:
-        - 's2i'
-        - 'build'
-        - '$(params.PATH_CONTEXT)'
-        - 'registry.access.redhat.com/redhat-openjdk-18/openjdk18-openshift'
-        - '--image-scripts-url'
-        - 'image:///usr/local/s2i'
-        - '--as-dockerfile'
-        - '/gen-source/Dockerfile.gen'
-        - '--environment-file'
-        - '/env-params/env-file'
-      volumeMounts:
-        - name: gen-source
-          mountPath: /gen-source
-        - name: envparams
-          mountPath: /env-params
-    - name: build
-      image: $(params.BUILDER_IMAGE)
-      workingdir: /gen-source
-      command: ['buildah', 'bud', '--storage-driver=vfs', '--tls-verify=$(params.TLSVERIFY)', '--layers', '-f', '/gen-source/Dockerfile.gen', '-t', '$(params.IMAGE)', '.']
-      volumeMounts:
-        - name: varlibcontainers
-          mountPath: /var/lib/containers
-        - name: gen-source
-          mountPath: /gen-source
-    - name: push
-      image: $(params.BUILDER_IMAGE)
-      workingDir: $(workspaces.source.path)
-      command: ['buildah', 'push', '--storage-driver=vfs', '--tls-verify=$(params.TLSVERIFY)', '--digestfile=$(workspaces.source.path)/image-digest', '$(params.IMAGE)', 'docker://$(params.IMAGE)']
-      volumeMounts:
-        - name: varlibcontainers
-          mountPath: /var/lib/containers
-    - name: digest-to-results
-      image: $(params.BUILDER_IMAGE)
-      script: cat $(workspaces.source.path)/image-digest | tee /tekton/results/IMAGE_DIGEST
-  volumes:
-    - name: varlibcontainers
-      emptyDir: {}
-    - name: gen-source
-      emptyDir: {}
-    - name: envparams
-      emptyDir: {}
-
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: s2i-java-8-workspace
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 100Mi
-
----
-apiVersion: tekton.dev/v1beta1
-kind: Task
-metadata:
-  name: s2i-nodejs-pr
-  labels:
-    app.kubernetes.io/version: "0.1"
-  annotations:
-    tekton.dev/pipelines.minVersion: "0.11.3"
-    tekton.dev/tags: s2i, nodejs
-    tekton.dev/displayName: "s2i nodejs pipelineresource"
-spec:
-  description: >-
-    s2i-nodejs-pr task fetches a Git repository and builds and
-    pushes a container image using S2I and a nodejs builder image.
+    s2i-java task clones a Git repository and builds and
+    pushes a container image using S2I and a Java builder image.
 
   results:
     - name: IMAGE_DIGEST
       description: Digest of the image just built.
   params:
     - name: VERSION
-      description: The version of the nodejs
-      default: '12'
+      description: The tag of java imagestream for java version
+      default: 'openjdk-11-ubi8'
       type: string
     - name: PATH_CONTEXT
-      description: The location of the path to run s2i from.
+      description: The location of the path to run s2i from
       default: .
       type: string
     - name: TLSVERIFY
       description: Verify the TLS on the registry endpoint (for push/pull to a non-TLS registry)
       default: "true"
       type: string
+    - name: MAVEN_ARGS_APPEND
+      description: Additional Maven arguments
+      default: ""
+      type: string
+    - name: MAVEN_CLEAR_REPO
+      description: Remove the Maven repository after the artifact is built
+      default: "false"
+      type: string
+    - name: MAVEN_MIRROR_URL
+      description: The base URL of a mirror used for retrieving artifacts
+      default: ""
+      type: string
+    - name: IMAGE
+      description: Location of the repo where image has to be pushed
+      type: string
     - name: BUILDER_IMAGE
       description: The location of the buildah builder image.
       default: quay.io/buildah/stable:v1.17.0
-  resources:
-    inputs:
-      - name: source
-        type: git
-    outputs:
-      - name: image
-        type: image
+  workspaces:
+    - name: source
+      mountPath: /workspace/source
   steps:
+    - name: gen-env-file
+      image: quay.io/openshift-pipeline/s2i
+      workingdir: /env-params
+      command:
+        - '/bin/sh'
+        - '-c'
+      args:
+        - |-
+          echo "MAVEN_CLEAR_REPO=$(params.MAVEN_CLEAR_REPO)" > env-file
+
+          [[ '$(params.MAVEN_ARGS_APPEND)' != "" ]] &&
+            echo "MAVEN_ARGS_APPEND=$(params.MAVEN_ARGS_APPEND)" >> env-file
+
+          [[ '$(params.MAVEN_MIRROR_URL)' != "" ]] &&
+            echo "MAVEN_MIRROR_URL=$(params.MAVEN_MIRROR_URL)" >> env-file
+
+          echo "Generated Env file"
+          echo "------------------------------"
+          cat env-file
+          echo "------------------------------"
+      volumeMounts:
+        - name: envparams
+          mountPath: /env-params
     - name: generate
       image: quay.io/openshift-pipeline/s2i
-      workingDir: $(resources.inputs.source.path)
-      command: ['s2i', 'build', '$(params.PATH_CONTEXT)', 'image-registry.openshift-image-registry.svc:5000/openshift/nodejs:$(params.VERSION)', '--as-dockerfile', '/gen-source/Dockerfile.gen']
+      workingdir: $(workspaces.source.path)
+      command:
+        - 's2i'
+        - 'build'
+        - '$(params.PATH_CONTEXT)'
+        - 'image-registry.openshift-image-registry.svc:5000/openshift/java:$(params.VERSION)'
+        - '--image-scripts-url'
+        - 'image:///usr/local/s2i'
+        - '--as-dockerfile'
+        - '/gen-source/Dockerfile.gen'
+        - '--environment-file'
+        - '/env-params/env-file'
       volumeMounts:
         - name: gen-source
           mountPath: /gen-source
+        - name: envparams
+          mountPath: /env-params
     - name: build
       image: $(params.BUILDER_IMAGE)
       workingdir: /gen-source
-      command: ['buildah', 'bud', '--storage-driver=vfs', '--tls-verify=$(params.TLSVERIFY)', '--layers', '-f', '/gen-source/Dockerfile.gen', '-t', '$(resources.outputs.image.url)', '.']
+      command: ['buildah', 'bud', '--storage-driver=vfs', '--tls-verify=$(params.TLSVERIFY)', '--layers', '-f', '/gen-source/Dockerfile.gen', '-t', '$(params.IMAGE)', '.']
       volumeMounts:
         - name: varlibcontainers
           mountPath: /var/lib/containers
@@ -1424,43 +275,33 @@ spec:
           mountPath: /gen-source
     - name: push
       image: $(params.BUILDER_IMAGE)
-      workingDir: $(resources.inputs.source.path)
-      command: ['buildah', 'push', '--storage-driver=vfs', '--tls-verify=$(params.TLSVERIFY)', '--digestfile=$(resources.inputs.source.path)/image-digest', '$(resources.outputs.image.url)', 'docker://$(resources.outputs.image.url)']
+      workingDir: $(workspaces.source.path)
+      command: ['buildah', 'push', '--storage-driver=vfs', '--tls-verify=$(params.TLSVERIFY)', '--digestfile=$(workspaces.source.path)/image-digest', '$(params.IMAGE)', 'docker://$(params.IMAGE)']
       volumeMounts:
         - name: varlibcontainers
           mountPath: /var/lib/containers
     - name: digest-to-results
       image: $(params.BUILDER_IMAGE)
-      script: cat $(resources.inputs.source.path)/image-digest | tee /tekton/results/IMAGE_DIGEST
+      script: cat $(workspaces.source.path)/image-digest | tee /tekton/results/IMAGE_DIGEST
   volumes:
     - name: varlibcontainers
       emptyDir: {}
     - name: gen-source
       emptyDir: {}
+    - name: envparams
+      emptyDir: {}
 
 ---
-apiVersion: tekton.dev/v1alpha1
-kind: PipelineResource
+apiVersion: v1
+kind: PersistentVolumeClaim
 metadata:
-  name: s2i-nodejs-pr-repo
+  name: s2i-java-workspace
 spec:
-  type: git
-  params:
-    - name: revision
-      value: master
-    - name: url
-      value: https://github.com/sclorg/nodejs-ex
----
-apiVersion: tekton.dev/v1alpha1
-kind: PipelineResource
-metadata:
-  name: s2i-nodejs-pr-image
-spec:
-  type: image
-  params:
-    - name: url
-      value: "image-registry.openshift-image-registry.svc:5000/{{namespace}}/s2i-nodejs-pr"
-
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Mi
 ---
 apiVersion: tekton.dev/v1beta1
 kind: Task
@@ -1469,7 +310,7 @@ metadata:
   labels:
     app.kubernetes.io/version: "0.1"
   annotations:
-    tekton.dev/pipelines.minVersion: "0.11.3"
+    tekton.dev/pipelines.minVersion: "0.19"
     tekton.dev/tags: s2i, nodejs, workspace
     tekton.dev/displayName: "s2i nodejs"
 spec:
@@ -1482,8 +323,8 @@ spec:
       description: Digest of the image just built.
   params:
     - name: VERSION
-      description: The version of the nodejs
-      default: '12'
+      description: The tag of nodejs imagestream for nodejs version
+      default: '14-ubi8'
       type: string
     - name: PATH_CONTEXT
       description: The location of the path to run s2i from.
@@ -1546,105 +387,6 @@ spec:
   resources:
     requests:
       storage: 100Mi
-
----
-apiVersion: tekton.dev/v1beta1
-kind: Task
-metadata:
-  name: s2i-php-pr
-  labels:
-    app.kubernetes.io/version: "0.1"
-  annotations:
-    tekton.dev/pipelines.minVersion: "0.11.3"
-    tekton.dev/tags: s2i, php
-    tekton.dev/displayName: "s2i php pipelineresource"
-spec:
-  description: >-
-    s2i-php-pr task fetches a Git repository and builds and
-    pushes a container image using S2I and a PHP builder image.
-
-  results:
-    - name: IMAGE_DIGEST
-      description: Digest of the image just built.
-  params:
-    - name: MINOR_VERSION
-      description: The minor version of the php
-      default: '3'
-      type: string
-    - name: PATH_CONTEXT
-      description: The location of the path to run s2i from.
-      default: .
-      type: string
-    - name: TLSVERIFY
-      description: Verify the TLS on the registry endpoint (for push/pull to a non-TLS registry)
-      default: "true"
-      type: string
-    - name: BUILDER_IMAGE
-      description: The location of the buildah builder image.
-      default: quay.io/buildah/stable:v1.17.0
-  resources:
-    inputs:
-      - name: source
-        type: git
-    outputs:
-      - name: image
-        type: image
-  steps:
-    - name: generate
-      image: quay.io/openshift-pipeline/s2i
-      workingDir: $(resources.inputs.source.path)
-      command: ['s2i', 'build', '$(params.PATH_CONTEXT)', 'image-registry.openshift-image-registry.svc:5000/openshift/php:7.$(params.MINOR_VERSION)', '--as-dockerfile', '/gen-source/Dockerfile.gen']
-      volumeMounts:
-        - name: gen-source
-          mountPath: /gen-source
-    - name: build
-      image: $(params.BUILDER_IMAGE)
-      workingdir: /gen-source
-      command: ['buildah', 'bud', '--storage-driver=vfs', '--tls-verify=$(params.TLSVERIFY)', '--layers', '-f', '/gen-source/Dockerfile.gen', '-t', '$(resources.outputs.image.url)', '.']
-      volumeMounts:
-        - name: varlibcontainers
-          mountPath: /var/lib/containers
-        - name: gen-source
-          mountPath: /gen-source
-    - name: push
-      image: $(params.BUILDER_IMAGE)
-      workingDir: $(resources.inputs.source.path)
-      command: ['buildah', 'push', '--storage-driver=vfs', '--tls-verify=$(params.TLSVERIFY)', '--digestfile=$(resources.inputs.source.path)/image-digest', '$(resources.outputs.image.url)', 'docker://$(resources.outputs.image.url)']
-      volumeMounts:
-        - name: varlibcontainers
-          mountPath: /var/lib/containers
-    - name: digest-to-results
-      image: $(params.BUILDER_IMAGE)
-      script: cat $(resources.inputs.source.path)/image-digest | tee /tekton/results/IMAGE_DIGEST
-  volumes:
-    - name: varlibcontainers
-      emptyDir: {}
-    - name: gen-source
-      emptyDir: {}
-
----
-apiVersion: tekton.dev/v1alpha1
-kind: PipelineResource
-metadata:
-  name: s2i-php-pr-repo
-spec:
-  type: git
-  params:
-    - name: revision
-      value: master
-    - name: url
-      value: https://github.com/sclorg/s2i-php-container/
----
-apiVersion: tekton.dev/v1alpha1
-kind: PipelineResource
-metadata:
-  name: s2i-php-pr-image
-spec:
-  type: image
-  params:
-    - name: url
-      value: "image-registry.openshift-image-registry.svc:5000/{{namespace}}/s2i-php-pr"
-
 ---
 apiVersion: tekton.dev/v1beta1
 kind: Task
@@ -1653,7 +395,7 @@ metadata:
   labels:
     app.kubernetes.io/version: "0.1"
   annotations:
-    tekton.dev/pipelines.minVersion: "0.11.3"
+    tekton.dev/pipelines.minVersion: "0.19"
     tekton.dev/tags: s2i, php, workspace
     tekton.dev/displayName: "s2i php"
 spec:
@@ -1665,9 +407,9 @@ spec:
     - name: IMAGE_DIGEST
       description: Digest of the image just built.
   params:
-    - name: MINOR_VERSION
-      description: The minor version of the php
-      default: '3'
+    - name: VERSION
+      description: The tag of php imagestream for php version
+      default: '7.4-ubi8'
       type: string
     - name: PATH_CONTEXT
       description: The location of the path to run s2i from.
@@ -1690,7 +432,7 @@ spec:
     - name: generate
       image: quay.io/openshift-pipeline/s2i
       workingdir: $(workspaces.source.path)
-      command: ['s2i', 'build', '$(params.PATH_CONTEXT)', 'image-registry.openshift-image-registry.svc:5000/openshift/php:7.$(params.MINOR_VERSION)', '--as-dockerfile', '/gen-source/Dockerfile.gen']
+      command: ['s2i', 'build', '$(params.PATH_CONTEXT)', 'image-registry.openshift-image-registry.svc:5000/openshift/php:$(params.VERSION)', '--as-dockerfile', '/gen-source/Dockerfile.gen']
       volumeMounts:
         - name: gen-source
           mountPath: /gen-source
@@ -1734,123 +476,25 @@ spec:
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
-  name: s2i-python-2-pr
+  name: s2i-python
   labels:
     app.kubernetes.io/version: "0.1"
   annotations:
-    tekton.dev/pipelines.minVersion: "0.11.3"
-    tekton.dev/tags: s2i, python
-    tekton.dev/displayName: "s2i python 2 pipelineresource"
-spec:
-  description: >-
-    s2i-python-2-pr task fetches a Git repository and builds and
-    pushes a container image using S2I and a Python 2 builder image.
-
-  results:
-    - name: IMAGE_DIGEST
-      description: Digest of the image just built.
-  params:
-    - name: MINOR_VERSION
-      description: The minor version of the python 2
-      default: '7'
-      type: string
-    - name: PATH_CONTEXT
-      description: The location of the path to run s2i from.
-      default: .
-      type: string
-    - name: TLSVERIFY
-      description: Verify the TLS on the registry endpoint (for push/pull to a non-TLS registry)
-      default: "true"
-      type: string
-    - name: BUILDER_IMAGE
-      description: The location of the buildah builder image.
-      default: quay.io/buildah/stable:v1.17.0
-  resources:
-    inputs:
-      - name: source
-        type: git
-    outputs:
-      - name: image
-        type: image
-  steps:
-    - name: generate
-      image: quay.io/openshift-pipeline/s2i
-      workingDir: $(resources.inputs.source.path)
-      command: ['s2i', 'build', '$(params.PATH_CONTEXT)', 'registry.access.redhat.com/rhscl/python-2$(params.MINOR_VERSION)-rhel7', '--as-dockerfile', '/gen-source/Dockerfile.gen']
-      volumeMounts:
-        - name: gen-source
-          mountPath: /gen-source
-    - name: build
-      image: $(params.BUILDER_IMAGE)
-      workingdir: /gen-source
-      command: ['buildah', 'bud', '--storage-driver=vfs', '--tls-verify=$(params.TLSVERIFY)', '--layers', '-f', '/gen-source/Dockerfile.gen', '-t', '$(resources.outputs.image.url)', '.']
-      volumeMounts:
-        - name: varlibcontainers
-          mountPath: /var/lib/containers
-        - name: gen-source
-          mountPath: /gen-source
-    - name: push
-      image: $(params.BUILDER_IMAGE)
-      workingDir: $(resources.inputs.source.path)
-      command: ['buildah', 'push', '--storage-driver=vfs', '--tls-verify=$(params.TLSVERIFY)', '--digestfile=$(resources.inputs.source.path)/image-digest', '$(resources.outputs.image.url)', 'docker://$(resources.outputs.image.url)']
-      volumeMounts:
-        - name: varlibcontainers
-          mountPath: /var/lib/containers
-    - name: digest-to-results
-      image: $(params.BUILDER_IMAGE)
-      script: cat $(resources.inputs.source.path)/image-digest | tee /tekton/results/IMAGE_DIGEST
-  volumes:
-    - name: varlibcontainers
-      emptyDir: {}
-    - name: gen-source
-      emptyDir: {}
-
----
-apiVersion: tekton.dev/v1alpha1
-kind: PipelineResource
-metadata:
-  name: s2i-python-2-pr-repo
-spec:
-  type: git
-  params:
-    - name: revision
-      value: master
-    - name: url
-      value: https://github.com/sclorg/django-ex
----
-apiVersion: tekton.dev/v1alpha1
-kind: PipelineResource
-metadata:
-  name: s2i-python-2-pr-image
-spec:
-  type: image
-  params:
-    - name: url
-      value: "image-registry.openshift-image-registry.svc:5000/{{namespace}}/s2i-python-2-pr"
-
----
-apiVersion: tekton.dev/v1beta1
-kind: Task
-metadata:
-  name: s2i-python-2
-  labels:
-    app.kubernetes.io/version: "0.1"
-  annotations:
-    tekton.dev/pipelines.minVersion: "0.11.3"
+    tekton.dev/pipelines.minVersion: "0.19"
     tekton.dev/tags: s2i, python, workspace
-    tekton.dev/displayName: "s2i python 2"
+    tekton.dev/displayName: "s2i python"
 spec:
   description: >-
-    s2i-python-2 task clones a Git repository and builds and
-    pushes a container image using S2I and a Python 2 builder image.
+    s2i-python task clones a Git repository and builds and
+    pushes a container image using S2I and a Python builder image.
 
   results:
     - name: IMAGE_DIGEST
       description: Digest of the image just built.
   params:
-    - name: MINOR_VERSION
-      description: The minor version of the python 2
-      default: '7'
+    - name: VERSION
+      description: The tag of python imagestream for python version
+      default: '3.8-ubi8'
       type: string
     - name: PATH_CONTEXT
       description: The location of the path to run s2i from.
@@ -1873,191 +517,7 @@ spec:
     - name: generate
       image: quay.io/openshift-pipeline/s2i
       workingdir: $(workspaces.source.path)
-      command: ['s2i', 'build', '$(params.PATH_CONTEXT)', 'registry.access.redhat.com/rhscl/python-2$(params.MINOR_VERSION)-rhel7', '--as-dockerfile', '/gen-source/Dockerfile.gen']
-      volumeMounts:
-        - name: gen-source
-          mountPath: /gen-source
-    - name: build
-      image: $(params.BUILDER_IMAGE)
-      workingdir: /gen-source
-      command: ['buildah', 'bud', '--storage-driver=vfs', '--tls-verify=$(params.TLSVERIFY)', '--layers', '-f', '/gen-source/Dockerfile.gen', '-t', '$(params.IMAGE)', '.']
-      volumeMounts:
-        - name: varlibcontainers
-          mountPath: /var/lib/containers
-        - name: gen-source
-          mountPath: /gen-source
-    - name: push
-      image: $(params.BUILDER_IMAGE)
-      workingdir: $(workspaces.source.path)
-      command: ['buildah', 'push', '--storage-driver=vfs', '--tls-verify=$(params.TLSVERIFY)', '--digestfile=$(workspaces.source.path)/image-digest', '$(params.IMAGE)', 'docker://$(params.IMAGE)']
-      volumeMounts:
-        - name: varlibcontainers
-          mountPath: /var/lib/containers
-    - name: digest-to-results
-      image: $(params.BUILDER_IMAGE)
-      script: cat $(workspaces.source.path)/image-digest | tee /tekton/results/IMAGE_DIGEST
-  volumes:
-    - name: varlibcontainers
-      emptyDir: {}
-    - name: gen-source
-      emptyDir: {}
-
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: s2i-python-2-workspace
-spec:
-  accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 100Mi
-
----
-apiVersion: tekton.dev/v1beta1
-kind: Task
-metadata:
-  name: s2i-python-3-pr
-  labels:
-    app.kubernetes.io/version: "0.1"
-  annotations:
-    tekton.dev/pipelines.minVersion: "0.11.3"
-    tekton.dev/tags: s2i, python
-    tekton.dev/displayName: "s2i python 3 pipelineresource"
-spec:
-  description: >-
-    s2i-python-3-pr task fetches a Git repository and builds and
-    pushes a container image using S2I and a Python 3 builder image.
-
-  results:
-    - name: IMAGE_DIGEST
-      description: Digest of the image just built.
-  params:
-    - name: MINOR_VERSION
-      description: The minor version of the python 3
-      default: '6'
-      type: string
-    - name: PATH_CONTEXT
-      description: The location of the path to run s2i from.
-      default: .
-      type: string
-    - name: TLSVERIFY
-      description: Verify the TLS on the registry endpoint (for push/pull to a non-TLS registry)
-      default: "true"
-      type: string
-    - name: BUILDER_IMAGE
-      description: The location of the buildah builder image.
-      default: quay.io/buildah/stable:v1.17.0
-  resources:
-    inputs:
-      - name: source
-        type: git
-    outputs:
-      - name: image
-        type: image
-  steps:
-    - name: generate
-      image: quay.io/openshift-pipeline/s2i
-      workingDir: $(resources.inputs.source.path)
-      command: ['s2i', 'build', '$(params.PATH_CONTEXT)', 'registry.access.redhat.com/rhscl/python-3$(params.MINOR_VERSION)-rhel7', '--as-dockerfile', '/gen-source/Dockerfile.gen']
-      volumeMounts:
-        - name: gen-source
-          mountPath: /gen-source
-    - name: build
-      image: $(params.BUILDER_IMAGE)
-      workingdir: /gen-source
-      command: ['buildah', 'bud', '--storage-driver=vfs', '--tls-verify=$(params.TLSVERIFY)', '--layers', '-f', '/gen-source/Dockerfile.gen', '-t', '$(resources.outputs.image.url)', '.']
-      volumeMounts:
-        - name: varlibcontainers
-          mountPath: /var/lib/containers
-        - name: gen-source
-          mountPath: /gen-source
-    - name: push
-      image: $(params.BUILDER_IMAGE)
-      workingDir: $(resources.inputs.source.path)
-      command: ['buildah', 'push', '--storage-driver=vfs', '--tls-verify=$(params.TLSVERIFY)', '--digestfile=$(resources.inputs.source.path)/image-digest', '$(resources.outputs.image.url)', 'docker://$(resources.outputs.image.url)']
-      volumeMounts:
-        - name: varlibcontainers
-          mountPath: /var/lib/containers
-    - name: digest-to-results
-      image: $(params.BUILDER_IMAGE)
-      script: cat $(resources.inputs.source.path)/image-digest | tee /tekton/results/IMAGE_DIGEST
-  volumes:
-    - name: varlibcontainers
-      emptyDir: {}
-    - name: gen-source
-      emptyDir: {}
-
----
-apiVersion: tekton.dev/v1alpha1
-kind: PipelineResource
-metadata:
-  name: s2i-python-3-pr-repo
-spec:
-  type: git
-  params:
-    - name: revision
-      value: master
-    - name: url
-      value: https://github.com/sclorg/django-ex
----
-apiVersion: tekton.dev/v1alpha1
-kind: PipelineResource
-metadata:
-  name: s2i-python-3-pr-image
-spec:
-  type: image
-  params:
-    - name: url
-      value: "image-registry.openshift-image-registry.svc:5000/{{namespace}}/s2i-python-3-pr"
-
----
-apiVersion: tekton.dev/v1beta1
-kind: Task
-metadata:
-  name: s2i-python-3
-  labels:
-    app.kubernetes.io/version: "0.1"
-  annotations:
-    tekton.dev/pipelines.minVersion: "0.11.3"
-    tekton.dev/tags: s2i, python, workspace
-    tekton.dev/displayName: "s2i python 3"
-spec:
-  description: >-
-    s2i-python-3 task clones a Git repository and builds and
-    pushes a container image using S2I and a Python 3 builder image.
-
-  results:
-    - name: IMAGE_DIGEST
-      description: Digest of the image just built.
-  params:
-    - name: MINOR_VERSION
-      description: The minor version of the python 3
-      default: '6'
-      type: string
-    - name: PATH_CONTEXT
-      description: The location of the path to run s2i from.
-      default: .
-      type: string
-    - name: TLSVERIFY
-      description: Verify the TLS on the registry endpoint (for push/pull to a non-TLS registry)
-      default: "true"
-      type: string
-    - name: IMAGE
-      description: Location of the repo where image has to be pushed
-      type: string
-    - name: BUILDER_IMAGE
-      description: The location of the buildah builder image.
-      default: quay.io/buildah/stable:v1.17.0
-  workspaces:
-    - name: source
-      mountPath: /workspace/source
-  steps:
-    - name: generate
-      image: quay.io/openshift-pipeline/s2i
-      workingdir: $(workspaces.source.path)
-      command: ['s2i', 'build', '$(params.PATH_CONTEXT)', 'registry.access.redhat.com/rhscl/python-3$(params.MINOR_VERSION)-rhel7', '--as-dockerfile', '/gen-source/Dockerfile.gen']
+      command: ['s2i', 'build', '$(params.PATH_CONTEXT)', 'image-registry.openshift-image-registry.svc:5000/openshift/python:$(params.VERSION)', '--as-dockerfile', '/gen-source/Dockerfile.gen']
       volumeMounts:
         - name: gen-source
           mountPath: /gen-source
@@ -2091,7 +551,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: s2i-python-3-workspace
+  name: s2i-python-workspace
 spec:
   accessModes:
     - ReadWriteOnce
@@ -2103,109 +563,11 @@ spec:
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
-  name: s2i-ruby-pr
-  labels:
-    app.kubernetes.io/version: "0.1"
-  annotations:
-    tekton.dev/pipelines.minVersion: "0.11.3"
-    tekton.dev/tags: s2i, ruby
-    tekton.dev/displayName: "s2i ruby pipelineresource"
-spec:
-  description: >-
-    s2i-ruby-pr task fetches a Git repository and builds and
-    pushes a container image using S2I and a Ruby builder image.
-
-  results:
-    - name: IMAGE_DIGEST
-      description: Digest of the image just built.
-  params:
-    - name: MINOR_VERSION
-      description: The minor version of the ruby
-      default: '5'
-      type: string
-    - name: PATH_CONTEXT
-      description: The location of the path to run s2i from.
-      default: .
-      type: string
-    - name: TLSVERIFY
-      description: Verify the TLS on the registry endpoint (for push/pull to a non-TLS registry)
-      default: "true"
-      type: string
-    - name: BUILDER_IMAGE
-      description: The location of the buildah builder image.
-      default: quay.io/buildah/stable:v1.17.0
-  resources:
-    inputs:
-      - name: source
-        type: git
-    outputs:
-      - name: image
-        type: image
-  steps:
-    - name: generate
-      image: quay.io/openshift-pipeline/s2i
-      workingDir: $(resources.inputs.source.path)
-      command: ['s2i', 'build', '$(params.PATH_CONTEXT)', 'registry.access.redhat.com/rhscl/ruby-2$(params.MINOR_VERSION)-rhel7', '--as-dockerfile', '/gen-source/Dockerfile.gen']
-      volumeMounts:
-        - name: gen-source
-          mountPath: /gen-source
-    - name: build
-      image: $(params.BUILDER_IMAGE)
-      workingdir: /gen-source
-      command: ['buildah', 'bud', '--storage-driver=vfs', '--tls-verify=$(params.TLSVERIFY)', '--layers', '-f', '/gen-source/Dockerfile.gen', '-t', '$(resources.outputs.image.url)', '.']
-      volumeMounts:
-        - name: varlibcontainers
-          mountPath: /var/lib/containers
-        - name: gen-source
-          mountPath: /gen-source
-    - name: push
-      image: $(params.BUILDER_IMAGE)
-      workingDir: $(resources.inputs.source.path)
-      command: ['buildah', 'push', '--storage-driver=vfs', '--tls-verify=$(params.TLSVERIFY)', '--digestfile=$(resources.inputs.source.path)/image-digest', '$(resources.outputs.image.url)', 'docker://$(resources.outputs.image.url)']
-      volumeMounts:
-        - name: varlibcontainers
-          mountPath: /var/lib/containers
-    - name: digest-to-results
-      image: $(params.BUILDER_IMAGE)
-      script: cat $(resources.inputs.source.path)/image-digest | tee /tekton/results/IMAGE_DIGEST
-  volumes:
-    - name: varlibcontainers
-      emptyDir: {}
-    - name: gen-source
-      emptyDir: {}
-
----
-apiVersion: tekton.dev/v1alpha1
-kind: PipelineResource
-metadata:
-  name: s2i-ruby-pr-repo
-spec:
-  type: git
-  params:
-    - name: revision
-      value: master
-    - name: url
-      value: https://github.com/sclorg/ruby-ex
----
-apiVersion: tekton.dev/v1alpha1
-kind: PipelineResource
-metadata:
-  name: s2i-ruby-pr-image
-spec:
-  type: image
-  params:
-    - name: url
-      value: "image-registry.openshift-image-registry.svc:5000/{{namespace}}/s2i-ruby-pr"
-
----
-apiVersion: tekton.dev/v1beta1
-kind: Task
-metadata:
   name: s2i-ruby
   labels:
     app.kubernetes.io/version: "0.1"
   annotations:
-    tekton.dev/pipelines.minVersion: "0.11.3"
+    tekton.dev/pipelines.minVersion: "0.19"
     tekton.dev/tags: s2i, ruby, workspace
     tekton.dev/displayName: "s2i ruby"
 spec:
@@ -2217,9 +579,9 @@ spec:
     - name: IMAGE_DIGEST
       description: Digest of the image just built.
   params:
-    - name: MINOR_VERSION
-      description: The minor version of the ruby
-      default: '5'
+    - name: VERSION
+      description: The tag of ruby imagestream for ruby version
+      default: '2.7-ubi8'
       type: string
     - name: PATH_CONTEXT
       description: The location of the path to run s2i from.
@@ -2242,7 +604,7 @@ spec:
     - name: generate
       image: quay.io/openshift-pipeline/s2i
       workingdir: $(workspaces.source.path)
-      command: ['s2i', 'build', '$(params.PATH_CONTEXT)', 'registry.access.redhat.com/rhscl/ruby-2$(params.MINOR_VERSION)-rhel7', '--as-dockerfile', '/gen-source/Dockerfile.gen']
+      command: ['s2i', 'build', '$(params.PATH_CONTEXT)', 'image-registry.openshift-image-registry.svc:5000/openshift/ruby:$(params.VERSION)', '--as-dockerfile', '/gen-source/Dockerfile.gen']
       volumeMounts:
         - name: gen-source
           mountPath: /gen-source
@@ -2270,7 +632,6 @@ spec:
       emptyDir: {}
     - name: gen-source
       emptyDir: {}
-
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -2294,69 +655,14 @@ spec:
     - name: revision
   workspaces:
     - name: source
-    - name: s2i-dotnet-1-workspace
-    - name: s2i-dotnet-2-workspace
-    - name: s2i-dotnet-3-workspace
+    - name: s2i-dotnet-workspace
     - name: s2i-go-workspace
-    - name: s2i-java-11-workspace
-    - name: s2i-java-8-workspace
+    - name: s2i-java-workspace
     - name: s2i-nodejs-workspace
     - name: s2i-php-workspace
-    - name: s2i-python-2-workspace
-    - name: s2i-python-3-workspace
+    - name: s2i-python-workspace
     - name: s2i-ruby-workspace
-    
-  resources:
-    - name: buildah-pr-nocode
-      type: git
-    - name: buildah-pr-image
-      type: image
-    - name: s2i-dotnet-1-pr-repo
-      type: git
-    - name: s2i-dotnet-1-pr-image
-      type: image
-    - name: s2i-dotnet-2-pr-repo
-      type: git
-    - name: s2i-dotnet-2-pr-image
-      type: image
-    - name: s2i-dotnet-3-pr-repo
-      type: git
-    - name: s2i-dotnet-3-pr-image
-      type: image
-    - name: s2i-go-pr-repo
-      type: git
-    - name: s2i-go-pr-image
-      type: image
-    - name: s2i-java-11-pr-repo
-      type: git
-    - name: s2i-java-11-pr-image
-      type: image
-    - name: s2i-java-8-pr-repo
-      type: git
-    - name: s2i-java-8-pr-image
-      type: image
-    - name: s2i-nodejs-pr-repo
-      type: git
-    - name: s2i-nodejs-pr-image
-      type: image
-    - name: s2i-php-pr-repo
-      type: git
-    - name: s2i-php-pr-image
-      type: image
-    - name: s2i-python-2-pr-repo
-      type: git
-    - name: s2i-python-2-pr-image
-      type: image
-    - name: s2i-python-3-pr-repo
-      type: git
-    - name: s2i-python-3-pr-image
-      type: image
-    - name: s2i-ruby-pr-repo
-      type: git
-    - name: s2i-ruby-pr-image
-      type: image
-    
-  
+
   tasks:
 
     - name: fetch
@@ -2444,143 +750,8 @@ spec:
             script: |
               echo "OK: pre-step has passed"
 
-    - name: buildah-pr
-      params:
-      - name: TLSVERIFY
-        value: 'false'
-      resources:
-        inputs:
-        - name: source
-          resource: buildah-pr-nocode
-        outputs:
-        - name: image
-          resource: buildah-pr-image
-      runAfter:
-      - prestep
-      taskRef:
-        name: buildah-pr
 
-    - name: s2i-dotnet-1-pr-run
-      params:
-      - name: TLSVERIFY
-        value: 'false'
-      - name: PATH_CONTEXT
-        value: app
-      resources:
-        inputs:
-        - name: source
-          resource: s2i-dotnet-1-pr-repo
-        outputs:
-        - name: image
-          resource: s2i-dotnet-1-pr-image
-      runAfter:
-      - prestep
-      taskRef:
-        name: s2i-dotnet-1-pr
-
-    - name: fetch-repository-s2i-dotnet-1
-      params:
-      - name: url
-        value: https://github.com/redhat-developer/s2i-dotnetcore-ex
-      - name: subdirectory
-        value: ''
-      - name: deleteExisting
-        value: 'true'
-      - name: revision
-        value: dotnetcore-1.1
-      runAfter:
-      - prestep
-      taskRef:
-        name: git-clone
-      workspaces:
-      - name: output
-        workspace: s2i-dotnet-1-workspace
-    - name: s2i-dotnet-1-test
-      params:
-      - name: TLSVERIFY
-        value: 'false'
-      - name: PATH_CONTEXT
-        value: app
-      - name: IMAGE
-        value: image-registry.openshift-image-registry.svc:5000/{{namespace}}/s2i-dotnet-1
-      runAfter:
-      - fetch-repository-s2i-dotnet-1
-      taskRef:
-        name: s2i-dotnet-1
-      workspaces:
-      - name: source
-        workspace: s2i-dotnet-1-workspace
-
-    - name: s2i-dotnet-2-pr-run
-      params:
-      - name: TLSVERIFY
-        value: 'false'
-      - name: PATH_CONTEXT
-        value: app
-      resources:
-        inputs:
-        - name: source
-          resource: s2i-dotnet-2-pr-repo
-        outputs:
-        - name: image
-          resource: s2i-dotnet-2-pr-image
-      runAfter:
-      - prestep
-      taskRef:
-        name: s2i-dotnet-2-pr
-
-    - name: fetch-repository-s2i-dotnet-2
-      params:
-      - name: url
-        value: https://github.com/redhat-developer/s2i-dotnetcore-ex
-      - name: subdirectory
-        value: ''
-      - name: deleteExisting
-        value: 'true'
-      - name: revision
-        value: dotnetcore-2.2
-      runAfter:
-      - prestep
-      taskRef:
-        name: git-clone
-      workspaces:
-      - name: output
-        workspace: s2i-dotnet-2-workspace
-    - name: s2i-dotnet-2-test
-      params:
-      - name: TLSVERIFY
-        value: 'false'
-      - name: PATH_CONTEXT
-        value: app
-      - name: IMAGE
-        value: image-registry.openshift-image-registry.svc:5000/{{namespace}}/s2i-dotnet-2
-      runAfter:
-      - fetch-repository-s2i-dotnet-2
-      taskRef:
-        name: s2i-dotnet-2
-      workspaces:
-      - name: source
-        workspace: s2i-dotnet-2-workspace
-
-    - name: s2i-dotnet-3-pr-run
-      params:
-      - name: TLSVERIFY
-        value: 'false'
-      - name: PATH_CONTEXT
-        value: app
-      resources:
-        inputs:
-        - name: source
-          resource: s2i-dotnet-3-pr-repo
-        outputs:
-        - name: image
-          resource: s2i-dotnet-3-pr-image
-      runAfter:
-      - prestep
-      taskRef:
-        name: s2i-dotnet-3-pr
-
-    - name: fetch-repository-s2i-dotnet-3
+    - name: fetch-repository-s2i-dotnet
       params:
       - name: url
         value: https://github.com/redhat-developer/s2i-dotnetcore-ex
@@ -2596,38 +767,22 @@ spec:
         name: git-clone
       workspaces:
       - name: output
-        workspace: s2i-dotnet-3-workspace
-    - name: s2i-dotnet-3-test
+        workspace: s2i-dotnet-workspace
+    - name: s2i-dotnet-test
       params:
       - name: TLSVERIFY
         value: 'false'
       - name: PATH_CONTEXT
         value: app
       - name: IMAGE
-        value: image-registry.openshift-image-registry.svc:5000/{{namespace}}/s2i-dotnet-3
+        value: image-registry.openshift-image-registry.svc:5000/{{namespace}}/s2i-dotnet
       runAfter:
-      - fetch-repository-s2i-dotnet-3
+      - fetch-repository-s2i-dotnet
       taskRef:
-        name: s2i-dotnet-3
+        name: s2i-dotnet
       workspaces:
       - name: source
-        workspace: s2i-dotnet-3-workspace
-
-    - name: s2i-go-pr
-      params:
-      - name: TLSVERIFY
-        value: 'false'
-      resources:
-        inputs:
-        - name: source
-          resource: s2i-go-pr-repo
-        outputs:
-        - name: image
-          resource: s2i-go-pr-image
-      runAfter:
-      - prestep
-      taskRef:
-        name: s2i-go-pr
+        workspace: s2i-dotnet-workspace
 
     - name: fetch-repository-s2i-go
       params:
@@ -2660,23 +815,7 @@ spec:
       - name: source
         workspace: s2i-go-workspace
 
-    - name: s2i-java-11-pr
-      params:
-      - name: TLSVERIFY
-        value: 'false'
-      resources:
-        inputs:
-        - name: source
-          resource: s2i-java-11-pr-repo
-        outputs:
-        - name: image
-          resource: s2i-java-11-pr-image
-      runAfter:
-      - prestep
-      taskRef:
-        name: s2i-java-11-pr
-
-    - name: fetch-repository-s2i-java-11
+    - name: fetch-repository-s2i-java
       params:
       - name: url
         value: https://github.com/piyush-garg/spring-petclinic
@@ -2692,83 +831,20 @@ spec:
         name: git-clone
       workspaces:
       - name: output
-        workspace: s2i-java-11-workspace
-    - name: s2i-java-11-test
+        workspace: s2i-java-workspace
+    - name: s2i-java-test
       params:
       - name: TLSVERIFY
         value: 'false'
       - name: IMAGE
-        value: image-registry.openshift-image-registry.svc:5000/{{namespace}}/s2i-java-11
+        value: image-registry.openshift-image-registry.svc:5000/{{namespace}}/s2i-java
       runAfter:
-      - fetch-repository-s2i-java-11
+      - fetch-repository-s2i-java
       taskRef:
-        name: s2i-java-11
+        name: s2i-java
       workspaces:
       - name: source
-        workspace: s2i-java-11-workspace
-
-    - name: s2i-java-8-pr
-      params:
-      - name: TLSVERIFY
-        value: 'false'
-      resources:
-        inputs:
-        - name: source
-          resource: s2i-java-8-pr-repo
-        outputs:
-        - name: image
-          resource: s2i-java-8-pr-image
-      runAfter:
-      - prestep
-      taskRef:
-        name: s2i-java-8-pr
-
-    - name: fetch-repository-s2i-java-8
-      params:
-      - name: url
-        value: https://github.com/spring-projects/spring-petclinic
-      - name: subdirectory
-        value: ''
-      - name: deleteExisting
-        value: 'true'
-      - name: revision
-        value: d367e2b4b41a2de899b0f438bc984a7c1c011b77
-      runAfter:
-      - prestep
-      taskRef:
-        name: git-clone
-      workspaces:
-      - name: output
-        workspace: s2i-java-8-workspace
-    - name: s2i-java-8-test
-      params:
-      - name: TLSVERIFY
-        value: 'false'
-      - name: IMAGE
-        value: image-registry.openshift-image-registry.svc:5000/{{namespace}}/s2i-java-8
-      runAfter:
-      - fetch-repository-s2i-java-8
-      taskRef:
-        name: s2i-java-8
-      workspaces:
-      - name: source
-        workspace: s2i-java-8-workspace
-
-    - name: s2i-nodejs-pr
-      params:
-      - name: TLSVERIFY
-        value: 'false'
-      resources:
-        inputs:
-        - name: source
-          resource: s2i-nodejs-pr-repo
-        outputs:
-        - name: image
-          resource: s2i-nodejs-pr-image
-      runAfter:
-      - prestep
-      taskRef:
-        name: s2i-nodejs-pr
+        workspace: s2i-java-workspace
 
     - name: fetch-repository-s2i-nodejs
       params:
@@ -2800,24 +876,6 @@ spec:
       workspaces:
       - name: source
         workspace: s2i-nodejs-workspace
-
-    - name: s2i-php-pr
-      params:
-      - name: TLSVERIFY
-        value: 'false'
-      - name: PATH_CONTEXT
-        value: test/test-app
-      resources:
-        inputs:
-        - name: source
-          resource: s2i-php-pr-repo
-        outputs:
-        - name: image
-          resource: s2i-php-pr-image
-      runAfter:
-      - prestep
-      taskRef:
-        name: s2i-php-pr
 
     - name: fetch-repository-s2i-php
       params:
@@ -2852,23 +910,7 @@ spec:
       - name: source
         workspace: s2i-php-workspace
 
-    - name: s2i-python-2-pr
-      params:
-      - name: TLSVERIFY
-        value: 'false'
-      resources:
-        inputs:
-        - name: source
-          resource: s2i-python-2-pr-repo
-        outputs:
-        - name: image
-          resource: s2i-python-2-pr-image
-      runAfter:
-      - prestep
-      taskRef:
-        name: s2i-python-2-pr
-
-    - name: fetch-repository-s2i-python-2
+    - name: fetch-repository-s2i-python
       params:
       - name: url
         value: https://github.com/sclorg/django-ex
@@ -2884,83 +926,20 @@ spec:
         name: git-clone
       workspaces:
       - name: output
-        workspace: s2i-python-2-workspace
-    - name: s2i-python-2-test
+        workspace: s2i-python-workspace
+    - name: s2i-python-test
       params:
       - name: TLSVERIFY
         value: 'false'
       - name: IMAGE
-        value: image-registry.openshift-image-registry.svc:5000/{{namespace}}/s2i-python-2
+        value: image-registry.openshift-image-registry.svc:5000/{{namespace}}/s2i-python
       runAfter:
-      - fetch-repository-s2i-python-2
+      - fetch-repository-s2i-python
       taskRef:
-        name: s2i-python-2
+        name: s2i-python
       workspaces:
       - name: source
-        workspace: s2i-python-2-workspace
-
-    - name: s2i-python-3-pr
-      params:
-      - name: TLSVERIFY
-        value: 'false'
-      resources:
-        inputs:
-        - name: source
-          resource: s2i-python-3-pr-repo
-        outputs:
-        - name: image
-          resource: s2i-python-3-pr-image
-      runAfter:
-      - prestep
-      taskRef:
-        name: s2i-python-3-pr
-
-    - name: fetch-repository-s2i-python-3
-      params:
-      - name: url
-        value: https://github.com/sclorg/django-ex
-      - name: subdirectory
-        value: ''
-      - name: deleteExisting
-        value: 'true'
-      - name: revision
-        value: master
-      runAfter:
-      - prestep
-      taskRef:
-        name: git-clone
-      workspaces:
-      - name: output
-        workspace: s2i-python-3-workspace
-    - name: s2i-python-3-test
-      params:
-      - name: TLSVERIFY
-        value: 'false'
-      - name: IMAGE
-        value: image-registry.openshift-image-registry.svc:5000/{{namespace}}/s2i-python-3
-      runAfter:
-      - fetch-repository-s2i-python-3
-      taskRef:
-        name: s2i-python-3
-      workspaces:
-      - name: source
-        workspace: s2i-python-3-workspace
-
-    - name: s2i-ruby-pr
-      params:
-      - name: TLSVERIFY
-        value: 'false'
-      resources:
-        inputs:
-        - name: source
-          resource: s2i-ruby-pr-repo
-        outputs:
-        - name: image
-          resource: s2i-ruby-pr-image
-      runAfter:
-      - prestep
-      taskRef:
-        name: s2i-ruby-pr
+        workspace: s2i-python-workspace
 
     - name: fetch-repository-s2i-ruby
       params:
@@ -2992,7 +971,6 @@ spec:
       workspaces:
       - name: source
         workspace: s2i-ruby-workspace
-
 
   finally:
     - name: finally
@@ -3051,115 +1029,25 @@ spec:
           resources:
             requests:
               storage: 500Mi
-  
-    - name: s2i-dotnet-1-workspace
+
+    - name: s2i-dotnet-workspace
       persistentvolumeclaim:
-        claimName: s2i-dotnet-1-workspace
-    - name: s2i-dotnet-2-workspace
-      persistentvolumeclaim:
-        claimName: s2i-dotnet-2-workspace
-    - name: s2i-dotnet-3-workspace
-      persistentvolumeclaim:
-        claimName: s2i-dotnet-3-workspace
+        claimName: s2i-dotnet-workspace
     - name: s2i-go-workspace
       persistentvolumeclaim:
         claimName: s2i-go-workspace
-    - name: s2i-java-11-workspace
+    - name: s2i-java-workspace
       persistentvolumeclaim:
-        claimName: s2i-java-11-workspace
-    - name: s2i-java-8-workspace
-      persistentvolumeclaim:
-        claimName: s2i-java-8-workspace
+        claimName: s2i-java-workspace
     - name: s2i-nodejs-workspace
       persistentvolumeclaim:
         claimName: s2i-nodejs-workspace
     - name: s2i-php-workspace
       persistentvolumeclaim:
         claimName: s2i-php-workspace
-    - name: s2i-python-2-workspace
+    - name: s2i-python-workspace
       persistentvolumeclaim:
-        claimName: s2i-python-2-workspace
-    - name: s2i-python-3-workspace
-      persistentvolumeclaim:
-        claimName: s2i-python-3-workspace
+        claimName: s2i-python-workspace
     - name: s2i-ruby-workspace
       persistentvolumeclaim:
         claimName: s2i-ruby-workspace
-    
-  
-  
-  resources:
-    - name: buildah-pr-nocode
-      resourceRef:
-        name: buildah-pr-nocode
-    - name: buildah-pr-image
-      resourceRef:
-        name: buildah-pr-image
-    - name: s2i-dotnet-1-pr-repo
-      resourceRef:
-        name: s2i-dotnet-1-pr-repo
-    - name: s2i-dotnet-1-pr-image
-      resourceRef:
-        name: s2i-dotnet-1-pr-image
-    - name: s2i-dotnet-2-pr-repo
-      resourceRef:
-        name: s2i-dotnet-2-pr-repo
-    - name: s2i-dotnet-2-pr-image
-      resourceRef:
-        name: s2i-dotnet-2-pr-image
-    - name: s2i-dotnet-3-pr-repo
-      resourceRef:
-        name: s2i-dotnet-3-pr-repo
-    - name: s2i-dotnet-3-pr-image
-      resourceRef:
-        name: s2i-dotnet-3-pr-image
-    - name: s2i-go-pr-repo
-      resourceRef:
-        name: s2i-go-pr-repo
-    - name: s2i-go-pr-image
-      resourceRef:
-        name: s2i-go-pr-image
-    - name: s2i-java-11-pr-repo
-      resourceRef:
-        name: s2i-java-11-pr-repo
-    - name: s2i-java-11-pr-image
-      resourceRef:
-        name: s2i-java-11-pr-image
-    - name: s2i-java-8-pr-repo
-      resourceRef:
-        name: s2i-java-8-pr-repo
-    - name: s2i-java-8-pr-image
-      resourceRef:
-        name: s2i-java-8-pr-image
-    - name: s2i-nodejs-pr-repo
-      resourceRef:
-        name: s2i-nodejs-pr-repo
-    - name: s2i-nodejs-pr-image
-      resourceRef:
-        name: s2i-nodejs-pr-image
-    - name: s2i-php-pr-repo
-      resourceRef:
-        name: s2i-php-pr-repo
-    - name: s2i-php-pr-image
-      resourceRef:
-        name: s2i-php-pr-image
-    - name: s2i-python-2-pr-repo
-      resourceRef:
-        name: s2i-python-2-pr-repo
-    - name: s2i-python-2-pr-image
-      resourceRef:
-        name: s2i-python-2-pr-image
-    - name: s2i-python-3-pr-repo
-      resourceRef:
-        name: s2i-python-3-pr-repo
-    - name: s2i-python-3-pr-image
-      resourceRef:
-        name: s2i-python-3-pr-image
-    - name: s2i-ruby-pr-repo
-      resourceRef:
-        name: s2i-ruby-pr-repo
-    - name: s2i-ruby-pr-image
-      resourceRef:
-        name: s2i-ruby-pr-image
-    
-  

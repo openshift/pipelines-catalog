@@ -5,7 +5,7 @@ metadata:
   labels:
     app.kubernetes.io/version: "0.1"
   annotations:
-    tekton.dev/pipelines.minVersion: "0.11.3"
+    tekton.dev/pipelines.minVersion: "0.19"
     tekton.dev/tags: s2i, ruby, workspace
     tekton.dev/displayName: "s2i ruby"
 spec:
@@ -17,9 +17,9 @@ spec:
     - name: IMAGE_DIGEST
       description: Digest of the image just built.
   params:
-    - name: MINOR_VERSION
-      description: The minor version of the ruby
-      default: '5'
+    - name: VERSION
+      description: The tag of ruby imagestream for ruby version
+      default: '2.7-ubi8'
       type: string
     - name: PATH_CONTEXT
       description: The location of the path to run s2i from.
@@ -42,7 +42,7 @@ spec:
     - name: generate
       image: quay.io/openshift-pipeline/s2i
       workingdir: $(workspaces.source.path)
-      command: ['s2i', 'build', '$(params.PATH_CONTEXT)', 'registry.access.redhat.com/rhscl/ruby-2$(params.MINOR_VERSION)-rhel7', '--as-dockerfile', '/gen-source/Dockerfile.gen']
+      command: ['s2i', 'build', '$(params.PATH_CONTEXT)', 'image-registry.openshift-image-registry.svc:5000/openshift/ruby:$(params.VERSION)', '--as-dockerfile', '/gen-source/Dockerfile.gen']
       volumeMounts:
         - name: gen-source
           mountPath: /gen-source

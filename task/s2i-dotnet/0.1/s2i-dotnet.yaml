@@ -1,25 +1,28 @@
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
-  name: s2i-go
+  name: s2i-dotnet
   labels:
     app.kubernetes.io/version: "0.1"
   annotations:
     tekton.dev/pipelines.minVersion: "0.19"
-    tekton.dev/tags: s2i, go, workspace
-    tekton.dev/displayName: "s2i go"
+    tekton.dev/tags: s2i, dotnet, workspace
+    tekton.dev/displayName: "s2i dotnet"
 spec:
   description: >-
-    s2i-go task clones a Git repository and builds and
-    pushes a container image using S2I and a Go builder image.
+    s2i-dotnet task fetches a Git repository and builds and
+    pushes a container image using S2I and a .NET Core builder image.
 
   results:
     - name: IMAGE_DIGEST
       description: Digest of the image just built.
   params:
+    - name: BUILDER_IMAGE
+      description: The location of the buildah builder image.
+      default: quay.io/buildah/stable:v1.17.0
     - name: VERSION
-      description: The tag of go imagestream for go version
-      default: '1.14.7-ubi8'
+      description: The tag of .NET imagestream for .NET version
+      default: '3.1-ubi8'
       type: string
     - name: PATH_CONTEXT
       description: The location of the path to run s2i from.
@@ -32,9 +35,6 @@ spec:
     - name: IMAGE
       description: Location of the repo where image has to be pushed
       type: string
-    - name: BUILDER_IMAGE
-      description: The location of the buildah builder image.
-      default: quay.io/buildah/stable:v1.17.0
   workspaces:
     - name: source
       mountPath: /workspace/source
@@ -42,7 +42,7 @@ spec:
     - name: generate
       image: quay.io/openshift-pipeline/s2i
       workingdir: $(workspaces.source.path)
-      command: ['s2i', 'build', '$(params.PATH_CONTEXT)', 'image-registry.openshift-image-registry.svc:5000/openshift/golang:$(params.VERSION)', '--as-dockerfile', '/gen-source/Dockerfile.gen']
+      command: ['s2i', 'build', '$(params.PATH_CONTEXT)', 'image-registry.openshift-image-registry.svc:5000/openshift/dotnet:$(params.VERSION)', '--as-dockerfile', '/gen-source/Dockerfile.gen']
       volumeMounts:
         - name: gen-source
           mountPath: /gen-source

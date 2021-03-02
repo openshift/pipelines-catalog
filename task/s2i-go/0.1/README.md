@@ -7,7 +7,8 @@ from source code. This tasks uses the s2i-go image build from [sclorg/golang-con
 
 GO versions currently provided are:
 
-- 1.11
+- 1.13.4-ubi7
+- 1.14.7-ubi8
 
 ## Installing the Go Task
 
@@ -17,6 +18,8 @@ kubectl apply -f https://raw.githubusercontent.com/openshift/pipelines-catalog/m
 
 ## Parameters
 
+* **VERSION**:  The tag of go imagestream for go version
+  (_default: 1.14.7-ubi8_)
 * **PATH_CONTEXT**: Source path from where S2I command needs to be run
   (_default: ._)
 * **TLSVERIFY**: Verify the TLS on the registry endpoint (for push/pull to a

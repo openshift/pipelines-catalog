@@ -1,33 +1,38 @@
-# PHP Source-to-Image
+# Java Source-to-Image
 
-This task can be used for building `PHP` apps as reproducible Docker
+This task can be used for building `Java` apps as reproducible Docker
 images using Source-to-Image. [Source-to-Image (S2I)](https://github.com/openshift/source-to-image)
 is a toolkit and a workflow for building reproducible container images
-from source code. This tasks uses the s2i-php image build from [sclorg/s2i-php-container](https://github.com/sclorg/s2i-php-container).
+from source code. This java task uses `image-registry.openshift-image-registry.svc:5000/openshift/java` builder image
 
-PHP versions currently provided are:
+Java versions currently provided are:
 
-- 7.4-ubi8
-- 7.3
-- 7.3-ubi7 
-- 7.3-ubi8
-- 7.2-ubi8
+- 11
+- openjdk-11-el7  
+- openjdk-11-ubi8
+- 8
+- openjdk-8-el7  
+- openjdk-8-ubi8
 
-## Installing the PHP Task
+## Installing the Java  Task
 
 ```
-kubectl apply -f https://raw.githubusercontent.com/openshift/pipelines-catalog/master/task/s2i-php/0.1/s2i-php.yaml
+kubectl apply -f https://raw.githubusercontent.com/openshift/pipelines-catalog/master/task/s2i-java/0.1/s2i-java.yaml
 ```
 
 ## Parameters
 
-* **VERSION**: The tag of php imagestream for php version
-  (_default: 7.4-ubi8_)
+* **VERSION**:  The tag of java imagestream for java version
+  (_default: openjdk-11-ubi8_)
 * **PATH_CONTEXT**: Source path from where S2I command needs to be run
-  (_default: ._)
+  (_default: `.`_)
 * **TLSVERIFY**: Verify the TLS on the registry endpoint (for push/pull to a
   non-TLS registry) (_default:_ `true`)
-* **IMAGE**: Location of the repo where image has to be pushed.
+* **MAVEN_ARGS_APPEND**: Additional Maven arguments (_optional_, _no default_)
+* **MAVEN_CLEAR_REPO**: Remove the Maven repository after the artifact is
+  built (_default:_ `false`)
+* **MAVEN_MIRROR_URL**: The base URL of a mirror used for retrieving artifacts
+  ((_optional_, _no default_))
 
 ## Workspaces
 
@@ -55,12 +60,6 @@ oc create serviceaccount pipeline
 oc adm policy add-scc-to-user privileged -z pipeline
 oc adm policy add-role-to-user edit -z pipeline
 ```
-* **IMAGE**: Location of the repo where image has to be pushed.
-
-## Workspaces
-
-* **source**: A workspace specifying the location of the source to
-  build.
 
 ## Using a `Pipeline` with `git-clone`
 
@@ -68,7 +67,7 @@ oc adm policy add-role-to-user edit -z pipeline
 apiVersion: tekton.dev/v1beta1
 kind: Pipeline
 metadata:
-  name: s2i-php-pipeline
+  name: s2i-java-pipeline
 spec:
   params:
     - name: IMAGE
@@ -92,7 +91,7 @@ spec:
           value: "true"
     - name: s2i
       taskRef:
-        name: s2i-php
+        name: s2i-java
       workspaces:
         - name: source
           workspace: shared-workspace
@@ -103,19 +102,19 @@ spec:
 
 ## Creating the pipelinerun
 
-This PipelineRun runs the php Task to fetch a Git repository and builds and
-pushes a container image using S2I and a php builder image.
+This PipelineRun runs the Java Task to fetch a Git repository and builds and
+pushes a container image using S2I and a Java builder image.
 
 ```yaml
 apiVersion: tekton.dev/v1beta1
 kind: PipelineRun
 metadata:
-  name: s2i-php-pipelinerun
+  name: s2i-java-pipelinerun
 spec:
   # Use service account with git and image repo credentials
   serviceAccountName: pipeline
   pipelineRunRef:
-    name: s2i-php-pipeline
+    name: s2i-java-pipeline
   params:
   - name: IMAGE
     value: quay.io/my-repo/my-image-name

@@ -7,9 +7,15 @@ from source code. This tasks uses the s2i-ruby image build from [sclorg/s2i-ruby
 
 Ruby versions currently provided are:
 
-- Ruby 2.3
-- Ruby 2.4
-- Ruby 2.5
+- 2.7
+- 2.7-ubi7
+- 2.7-ubi8  
+- 2.6
+- 2.6-ubi7  
+- 2.6-ubi8
+- 2.5
+- 2.5-ubi7
+- 2.5-ubi8
 
 ## Installing the Ruby Task
 
@@ -19,8 +25,8 @@ kubectl apply -f https://raw.githubusercontent.com/openshift/pipelines-catalog/m
 
 ## Parameters
 
-* **MINOR_VERSION**: Minor version of the Ruby 2
-  (_default: 5_)
+* **VERSION**: The tag of ruby imagestream for ruby version
+  (_default: 2.7-ubi8_)
 * **PATH_CONTEXT**: Source path from where S2I command needs to be run
   (_default: ._)
 * **TLSVERIFY**: Verify the TLS on the registry endpoint (for push/pull to a

@@ -1,0 +1,31 @@
+- name: fetch-repository-s2i-dotnet
+  taskRef:
+    name: git-clone
+  workspaces:
+    - name: output
+      workspace: s2i-dotnet-workspace
+  params:
+    - name: url
+      value: https://github.com/redhat-developer/s2i-dotnetcore-ex
+    - name: subdirectory
+      value: ""
+    - name: deleteExisting
+      value: "true"
+    - name: revision
+      value: "dotnetcore-3.1"
+
+- name: s2i-dotnet-test
+  taskRef:
+    name: s2i-dotnet
+  runAfter:
+    - fetch-repository-s2i-dotnet
+  workspaces:
+    - name: source
+      workspace: s2i-dotnet-workspace
+  params:
+    - name: TLSVERIFY
+      value: "false"
+    - name: PATH_CONTEXT
+      value: "app"
+    - name: IMAGE
+      value: "image-registry.openshift-image-registry.svc:5000/{{namespace}}/s2i-dotnet"

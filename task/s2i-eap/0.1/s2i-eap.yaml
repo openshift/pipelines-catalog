@@ -3,9 +3,9 @@ kind: Task
 metadata:
   name: s2i-eap
   labels:
-    app.kubernetes.io/version: "0.1"
+    app.kubernetes.io/version: "1.4.0"
   annotations:
-    tekton.dev/pipelines.minVersion: "0.11.3"
+    tekton.dev/pipelines.minVersion: "0.19"
     tekton.dev/tags: s2i, eap
     tekton.dev/displayName: "s2i eap"
 spec:

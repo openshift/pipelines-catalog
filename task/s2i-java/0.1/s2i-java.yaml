@@ -1,33 +1,45 @@
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
-  name: s2i-perl
+  name: s2i-java
   labels:
     app.kubernetes.io/version: "1.4.0"
   annotations:
     tekton.dev/pipelines.minVersion: "0.19"
-    tekton.dev/tags: s2i, perl, workspace
-    tekton.dev/displayName: "s2i perl"
+    tekton.dev/tags: s2i, java, workspace
+    tekton.dev/displayName: "s2i java"
 spec:
   description: >-
-    s2i-perl task clones a Git repository and builds and
-    pushes a container image using S2I and a Perl builder image.
+    s2i-java task clones a Git repository and builds and
+    pushes a container image using S2I and a Java builder image.
 
   results:
     - name: IMAGE_DIGEST
       description: Digest of the image just built.
   params:
     - name: VERSION
-      description: The tag of perl imagestream for perl version
-      default: '5.30-ubi8'
+      description: The tag of java imagestream for java version
+      default: 'openjdk-11-ubi8'
       type: string
     - name: PATH_CONTEXT
-      description: The location of the path to run s2i from.
+      description: The location of the path to run s2i from
       default: .
       type: string
     - name: TLSVERIFY
       description: Verify the TLS on the registry endpoint (for push/pull to a non-TLS registry)
       default: "true"
+      type: string
+    - name: MAVEN_ARGS_APPEND
+      description: Additional Maven arguments
+      default: ""
+      type: string
+    - name: MAVEN_CLEAR_REPO
+      description: Remove the Maven repository after the artifact is built
+      default: "false"
+      type: string
+    - name: MAVEN_MIRROR_URL
+      description: The base URL of a mirror used for retrieving artifacts
+      default: ""
       type: string
     - name: IMAGE
       description: Location of the repo where image has to be pushed
@@ -39,13 +51,48 @@ spec:
     - name: source
       mountPath: /workspace/source
   steps:
+    - name: gen-env-file
+      image: quay.io/openshift-pipeline/s2i
+      workingdir: /env-params
+      command:
+        - '/bin/sh'
+        - '-c'
+      args:
+        - |-
+          echo "MAVEN_CLEAR_REPO=$(params.MAVEN_CLEAR_REPO)" > env-file
+
+          [[ '$(params.MAVEN_ARGS_APPEND)' != "" ]] &&
+            echo "MAVEN_ARGS_APPEND=$(params.MAVEN_ARGS_APPEND)" >> env-file
+
+          [[ '$(params.MAVEN_MIRROR_URL)' != "" ]] &&
+            echo "MAVEN_MIRROR_URL=$(params.MAVEN_MIRROR_URL)" >> env-file
+
+          echo "Generated Env file"
+          echo "------------------------------"
+          cat env-file
+          echo "------------------------------"
+      volumeMounts:
+        - name: envparams
+          mountPath: /env-params
     - name: generate
       image: quay.io/openshift-pipeline/s2i
       workingdir: $(workspaces.source.path)
-      command: ['s2i', 'build', '$(params.PATH_CONTEXT)', 'image-registry.openshift-image-registry.svc:5000/openshift/perl:$(params.VERSION)', '--as-dockerfile', '/gen-source/Dockerfile.gen']
+      command:
+        - 's2i'
+        - 'build'
+        - '$(params.PATH_CONTEXT)'
+        - 'image-registry.openshift-image-registry.svc:5000/openshift/java:$(params.VERSION)'
+        - '--image-scripts-url'
+        - 'image:///usr/local/s2i'
+        - '--as-dockerfile'
+        - '/gen-source/Dockerfile.gen'
+        - '--environment-file'
+        - '/env-params/env-file'
       volumeMounts:
         - name: gen-source
           mountPath: /gen-source
+        - name: envparams
+          mountPath: /env-params
     - name: build
       image: $(params.BUILDER_IMAGE)
       workingdir: /gen-source
@@ -56,8 +103,8 @@ spec:
         - name: gen-source
           mountPath: /gen-source
     - name: push
-      workingDir: $(workspaces.source.path)
       image: $(params.BUILDER_IMAGE)
+      workingDir: $(workspaces.source.path)
       command: ['buildah', 'push', '--storage-driver=vfs', '--tls-verify=$(params.TLSVERIFY)', '--digestfile=$(workspaces.source.path)/image-digest', '$(params.IMAGE)', 'docker://$(params.IMAGE)']
       volumeMounts:
         - name: varlibcontainers
@@ -69,4 +116,6 @@ spec:
     - name: varlibcontainers
       emptyDir: {}
     - name: gen-source
+      emptyDir: {}
+    - name: envparams
       emptyDir: {}

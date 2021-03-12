@@ -7,8 +7,12 @@ from source code. This tasks uses the s2i-perl image build from [sclorg/s2i-perl
 
 Perl versions currently provided are:
 
-- Perl 5.24
-- Perl 5.26
+- 5.26
+- 5.26-el7
+- 5.26-ubi8
+- 5.30
+- 5.30-el7
+- 5.30-ubi8
 
 ## Installing the Perl Task
 
@@ -18,8 +22,8 @@ kubectl apply -f https://raw.githubusercontent.com/openshift/pipelines-catalog/m
 
 ## Parameters
 
-* **MINOR_VERSION**: Minor version of the Perl5
-  (_default: 26_)
+* **VERSION**: The tag of perl imagestream for perl version
+  (_default: 5.30-ubi8_)
 * **PATH_CONTEXT**: Source path from where S2I command needs to be run
   (_default: ._)
 * **TLSVERIFY**: Verify the TLS on the registry endpoint (for push/pull to a

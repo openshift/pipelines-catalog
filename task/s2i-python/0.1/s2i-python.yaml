@@ -1,25 +1,25 @@
 apiVersion: tekton.dev/v1beta1
 kind: Task
 metadata:
-  name: s2i-perl
+  name: s2i-python
   labels:
     app.kubernetes.io/version: "1.4.0"
   annotations:
     tekton.dev/pipelines.minVersion: "0.19"
-    tekton.dev/tags: s2i, perl, workspace
-    tekton.dev/displayName: "s2i perl"
+    tekton.dev/tags: s2i, python, workspace
+    tekton.dev/displayName: "s2i python"
 spec:
   description: >-
-    s2i-perl task clones a Git repository and builds and
-    pushes a container image using S2I and a Perl builder image.
+    s2i-python task clones a Git repository and builds and
+    pushes a container image using S2I and a Python builder image.
 
   results:
     - name: IMAGE_DIGEST
       description: Digest of the image just built.
   params:
     - name: VERSION
-      description: The tag of perl imagestream for perl version
-      default: '5.30-ubi8'
+      description: The tag of python imagestream for python version
+      default: '3.8-ubi8'
       type: string
     - name: PATH_CONTEXT
       description: The location of the path to run s2i from.
@@ -42,7 +42,7 @@ spec:
     - name: generate
       image: quay.io/openshift-pipeline/s2i
       workingdir: $(workspaces.source.path)
-      command: ['s2i', 'build', '$(params.PATH_CONTEXT)', 'image-registry.openshift-image-registry.svc:5000/openshift/perl:$(params.VERSION)', '--as-dockerfile', '/gen-source/Dockerfile.gen']
+      command: ['s2i', 'build', '$(params.PATH_CONTEXT)', 'image-registry.openshift-image-registry.svc:5000/openshift/python:$(params.VERSION)', '--as-dockerfile', '/gen-source/Dockerfile.gen']
       volumeMounts:
         - name: gen-source
           mountPath: /gen-source
@@ -56,6 +56,7 @@ spec:
         - name: gen-source
           mountPath: /gen-source
     - name: push
+
       workingDir: $(workspaces.source.path)
       image: $(params.BUILDER_IMAGE)
       command: ['buildah', 'push', '--storage-driver=vfs', '--tls-verify=$(params.TLSVERIFY)', '--digestfile=$(workspaces.source.path)/image-digest', '$(params.IMAGE)', 'docker://$(params.IMAGE)']

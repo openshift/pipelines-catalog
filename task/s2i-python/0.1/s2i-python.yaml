@@ -3,7 +3,7 @@ kind: Task
 metadata:
   name: s2i-python
   labels:
-    app.kubernetes.io/version: "1.4.0"
+    app.kubernetes.io/version: "0.1"
   annotations:
     tekton.dev/pipelines.minVersion: "0.19"
     tekton.dev/tags: s2i, python, workspace

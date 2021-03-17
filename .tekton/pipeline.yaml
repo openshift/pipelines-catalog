@@ -4,7 +4,7 @@ kind: Task
 metadata:
   name: s2i-dotnet
   labels:
-    app.kubernetes.io/version: "1.4.0"
+    app.kubernetes.io/version: "0.1"
   annotations:
     tekton.dev/pipelines.minVersion: "0.19"
     tekton.dev/tags: s2i, dotnet, workspace
@@ -89,7 +89,7 @@ kind: Task
 metadata:
   name: s2i-go
   labels:
-    app.kubernetes.io/version: "1.4.0"
+    app.kubernetes.io/version: "0.1"
   annotations:
     tekton.dev/pipelines.minVersion: "0.19"
     tekton.dev/tags: s2i, go, workspace
@@ -174,7 +174,7 @@ kind: Task
 metadata:
   name: s2i-java
   labels:
-    app.kubernetes.io/version: "1.4.0"
+    app.kubernetes.io/version: "0.1"
   annotations:
     tekton.dev/pipelines.minVersion: "0.19"
     tekton.dev/tags: s2i, java, workspace
@@ -308,7 +308,7 @@ kind: Task
 metadata:
   name: s2i-nodejs
   labels:
-    app.kubernetes.io/version: "1.4.0"
+    app.kubernetes.io/version: "0.1"
   annotations:
     tekton.dev/pipelines.minVersion: "0.19"
     tekton.dev/tags: s2i, nodejs, workspace
@@ -393,7 +393,7 @@ kind: Task
 metadata:
   name: s2i-php
   labels:
-    app.kubernetes.io/version: "1.4.0"
+    app.kubernetes.io/version: "0.1"
   annotations:
     tekton.dev/pipelines.minVersion: "0.19"
     tekton.dev/tags: s2i, php, workspace
@@ -478,7 +478,7 @@ kind: Task
 metadata:
   name: s2i-python
   labels:
-    app.kubernetes.io/version: "1.4.0"
+    app.kubernetes.io/version: "0.1"
   annotations:
     tekton.dev/pipelines.minVersion: "0.19"
     tekton.dev/tags: s2i, python, workspace
@@ -565,7 +565,7 @@ kind: Task
 metadata:
   name: s2i-ruby
   labels:
-    app.kubernetes.io/version: "1.4.0"
+    app.kubernetes.io/version: "0.1"
   annotations:
     tekton.dev/pipelines.minVersion: "0.19"
     tekton.dev/tags: s2i, ruby, workspace

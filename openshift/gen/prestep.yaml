@@ -29,7 +29,7 @@
           yamllint .tekton/ task/
 
 - name: kubectl-dry-run
-  runAfter: [fetch]
+  runAfter: [yaml-lint]
   taskSpec:
     workspaces:
       - name: source
@@ -45,7 +45,7 @@
       workspace: source
 
 - name: check-generated-yaml
-  runAfter: [fetch]
+  runAfter: [kubectl-dry-run]
   workspaces:
     - name: source
       workspace: source

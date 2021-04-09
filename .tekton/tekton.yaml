@@ -1,9 +1,6 @@
 owners:
   - "@openshift-pipelines"
 
-prerun:
-  - oc adm policy add-scc-to-user anyuid system:serviceaccount:{{namespace}}:pipeline
-
 tasks:
   - git-clone
 

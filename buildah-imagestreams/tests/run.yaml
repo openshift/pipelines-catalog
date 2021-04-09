@@ -1,0 +1,21 @@
+---
+apiVersion: tekton.dev/v1alpha1
+kind: TaskRun
+metadata:
+  name: buildah-imagestream-run
+spec:
+  taskRef:
+    name: buildah-imagestream
+  outputs:
+    resources:
+      - name: image
+        resourceRef:
+          name: image
+  inputs:
+    resources:
+      - name: source
+        resourceRef:
+          name: buildah-imagestream-ex
+    params:
+      - name: TLSVERIFY
+        value: "false"

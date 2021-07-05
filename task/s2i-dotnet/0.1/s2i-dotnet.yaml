@@ -28,6 +28,10 @@ spec:
       description: The location of the path to run s2i from.
       default: .
       type: string
+    - name: STARTUP_PROJECT
+      description: The location of the .NET project file or its parent folder.
+      default: .
+      type: string
     - name: TLSVERIFY
       description: Verify the TLS on the registry endpoint (for push/pull to a non-TLS registry)
       default: "true"
@@ -42,7 +46,7 @@ spec:
     - name: generate
       image: quay.io/openshift-pipeline/s2i
       workingdir: $(workspaces.source.path)
-      command: ['s2i', 'build', '$(params.PATH_CONTEXT)', 'image-registry.openshift-image-registry.svc:5000/openshift/dotnet:$(params.VERSION)', '--as-dockerfile', '/gen-source/Dockerfile.gen']
+      command: ['s2i', 'build', '$(params.PATH_CONTEXT)', 'image-registry.openshift-image-registry.svc:5000/openshift/dotnet:$(params.VERSION)', '-e', 'DOTNET_STARTUP_PROJECT=$(params.STARTUP_PROJECT)', '--as-dockerfile', '/gen-source/Dockerfile.gen']
       volumeMounts:
         - name: gen-source
           mountPath: /gen-source

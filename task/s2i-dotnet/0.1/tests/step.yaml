@@ -25,7 +25,7 @@
   params:
     - name: TLSVERIFY
       value: "false"
-    - name: PATH_CONTEXT
+    - name: STARTUP_PROJECT
       value: "app"
     - name: IMAGE
       value: "image-registry.openshift-image-registry.svc:5000/{{namespace}}/s2i-dotnet"

@@ -93,6 +93,9 @@ spec:
           mountPath: /gen-source
         - name: envparams
           mountPath: /env-params
+      env:
+        - name: HOME
+          value: /tekton/home
     - name: build
       image: $(params.BUILDER_IMAGE)
       workingdir: /gen-source

@@ -74,6 +74,9 @@ spec:
       volumeMounts:
         - name: envparams
           mountPath: /env-params
+      env:
+        - name: HOME
+          value: /tekton/home
     - name: generate
       image: quay.io/openshift-pipeline/s2i
       workingdir: $(workspaces.source.path)

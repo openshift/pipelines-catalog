@@ -1,3 +1,14 @@
+# ⚠️ ⚠ ️⚠️ Warning ⚠️ ⚠️ ⚠️
+
+This repository is deprecated.
+
+🧑‍💻 Development and maitenence of these tasks have moved to:
+https://github.com/tektoncd/operator/tree/main/cmd/openshift/operator/kodata/tekton-addon/addons/02-clustertasks/source_local
+
+The tasks in this repository are not maintained anymore.
+
+--- 
+
 # Pipelines Catalog
 
 This repository contains a catalog of Tekton `Task` resources (and
